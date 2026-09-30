@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+
+    <!-- Apple Touch Icon (used when added to home screen on iOS) -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Cache Control -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="WPS" />
+
+    <title>WorkoutPlanStudio — AI-Powered Gym Workout Planner</title>
+    <meta name="description" content="Turn any AI-generated workout plan into a structured, day-by-day gym companion. Track sets, rest timers, and progress — free, no account needed." />
+    <meta name="keywords" content="workout planner, gym app, AI workout, exercise tracker, fitness app, workout tracker" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="WorkoutPlanStudio — AI-Powered Gym Workout Planner" />
+    <meta property="og:description" content="Turn any AI-generated workout plan into a structured, day-by-day gym companion. Track sets, rest timers, and progress — free, no account needed." />
+    <meta property="og:url" content="https://workoutplanstudio.com" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="WorkoutPlanStudio — AI-Powered Gym Workout Planner" />
+    <meta name="twitter:description" content="Turn any AI-generated workout plan into a structured, day-by-day gym companion. Track sets, rest timers, and progress — free, no account needed." />
+    <!-- Google AdSense -->
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=%VITE_ADSENSE_PUBLISHER_ID%"
+      crossorigin="anonymous"
+      data-ad-client="%VITE_ADSENSE_PUBLISHER_ID%"
+    ></script>
+
+    <!-- Google Analytics GA4 (production only) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_MEASUREMENT_ID%"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '%VITE_GA_MEASUREMENT_ID%', { anonymize_ip: true, send_page_view: false });
+    </script>
+
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
