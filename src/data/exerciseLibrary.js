@@ -9,6 +9,8 @@
  *   instructions — 3–4 step-by-step setup/movement cues
  *   formTips    — 2 key form reminders
  *   mediaUrl    — YouTube search URL (always works, never goes dead)
+ *   mediaWebp   — local animated webP demo (same-origin /exercises/*.webp);
+ *                 preferred over mediaUrl when present
  *   alternates  — 2 swap options with a note on when/why to use them
  */
 
@@ -202,6 +204,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Maintain a neutral spine — no rounding at the lower back.", "Keep the weight close to your legs the entire way down."],
     mediaUrl: yt("Romanian Deadlift"),
+    mediaWebp: "/exercises/romanian-deadlift.webp",
     alternates: [
       { name: "Lying Leg Curl", note: "Isolates hamstrings without the hip hinge pattern." },
       { name: "Stiff-Leg Deadlift", note: "Knees slightly more extended — more stretch at the bottom." },
@@ -580,6 +583,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Holding the weight in front helps you stay upright — use this to learn the squat pattern.", "Elbows inside the knees prevents knee cave."],
     mediaUrl: yt("Goblet Squat"),
+    mediaWebp: "/exercises/goblet-squat.webp",
     alternates: [
       { name: "Barbell Back Squat", note: "Heavier loads once you've mastered the pattern." },
       { name: "Leg Press", note: "Machine alternative." },
@@ -818,6 +822,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["The floor stops your elbows — a shoulder-friendly press with no overhead work.", "Keep your wrists stacked over your elbows."],
     mediaUrl: yt("Dumbbell Floor Press"),
+    mediaWebp: "/exercises/floor-press.webp",
     alternates: [
       { name: "Dumbbell Bench Press", note: "Same press pattern with more range of motion." },
       { name: "Push-Up", note: "Bodyweight alternative, no equipment needed." },
@@ -834,6 +839,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep your torso upright — don't lean forward as you step back.", "Front knee tracks over your toes, never caving inward."],
     mediaUrl: yt("Dumbbell Reverse Lunge"),
+    mediaWebp: "/exercises/reverse-lunge.webp",
     alternates: [
       { name: "Bulgarian Split Squat", note: "Same leg, rear foot elevated — more stability demand." },
       { name: "Goblet Squat", note: "Bilateral squat alternative." },
@@ -898,6 +904,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep your back flat — no rounding, even as you tire.", "Squeeze your shoulder blades together at the top."],
     mediaUrl: yt("Dumbbell Bent Over Row"),
+    mediaWebp: "/exercises/bent-over-row.webp",
     alternates: [
       { name: "Dumbbell Row", note: "One arm at a time, supported on a bench." },
       { name: "Seated Cable Row", note: "Machine version of the same pull." },
@@ -962,6 +969,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Land softly on the balls of your feet.", "Keep your chest up — don't hunch forward as you tire."],
     mediaUrl: yt("Fast Marching in Place exercise"),
+    mediaWebp: "/exercises/fast-marching.webp",
     alternates: [
       { name: "Dumbbell Farmer March", note: "Add dumbbells for more challenge." },
       { name: "Standing Knee Drive", note: "Slower, more controlled knee drive." },

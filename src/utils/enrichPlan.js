@@ -25,7 +25,9 @@ function enrichExercise(ex) {
     media:
       ex.media?.url
         ? ex.media
-        : { type: "youtube", url: entry.mediaUrl, label: "Search on YouTube" },
+        : entry.mediaWebp
+          ? { type: "webp", url: entry.mediaWebp, label: "Watch demo" }
+          : { type: "youtube", url: entry.mediaUrl, label: "Search on YouTube" },
     alternates:
       ex.alternates?.length
         ? ex.alternates

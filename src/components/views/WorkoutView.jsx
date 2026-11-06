@@ -601,6 +601,18 @@ export default function WorkoutView({
                     </div>
                     <div className="space-y-4 p-4">
 
+                        {/* Animated demo — local webP loop for the current exercise */}
+                        {effectiveExercise.media?.type === "webp" && effectiveExercise.media?.url && (
+                            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800">
+                                <img
+                                    src={effectiveExercise.media.url}
+                                    alt={`Demo: ${effectiveExercise.name}`}
+                                    className="aspect-video w-full object-cover"
+                                    loading="lazy"
+                                />
+                            </div>
+                        )}
+
                         {/* Coaching note: soft tinted background only — no border + fill combination */}
                         {(() => {
                             const note = activeSessionExercise?.coachingNote ?? effectiveExercise.note;
@@ -672,8 +684,8 @@ export default function WorkoutView({
                                             </div>
                                         )}
 
-                                        {/* Watch demo link */}
-                                        {effectiveExercise.media?.url && (
+                                        {/* Watch demo link — YouTube fallback only; webP demos render inline above */}
+                                        {effectiveExercise.media?.type === "youtube" && effectiveExercise.media?.url && (
                                             <a
                                                 href={effectiveExercise.media.url}
                                                 target="_blank"

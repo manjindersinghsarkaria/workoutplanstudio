@@ -53,6 +53,9 @@ function stripMarkdownLink(url) {
 
 export function safeMediaUrl(url) {
   if (!url) return "";
+  // Same-origin local assets (e.g. /exercises/goblet-squat.webp) are safe.
+  // Protocol-relative URLs (//host/...) are not — they leave the origin.
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
   try {
     return new URL(url).protocol === "https:" ? url : "";
   } catch {
