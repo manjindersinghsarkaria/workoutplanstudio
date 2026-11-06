@@ -6,6 +6,23 @@
  * — enrichPlan() fills in instructions/formTips/media/alternates from the local library.
  */
 
+// Shared warm-up / cool-down for the 3-Day Dumbbell HIIT plan — the same
+// 5-minute warm-up before every workout and 3–5 minute cool-down after.
+const HIIT_WARM_UP = [
+  { name: "Walking in place", duration: "1 min", note: "Easy pace, arms swinging naturally." },
+  { name: "Arm circles", duration: "1 min", note: "Small circles, within a comfortable range." },
+  { name: "Bodyweight squats", duration: "1 min", note: "Slow and controlled, no weight." },
+  { name: "Gentle hip hinges", duration: "1 min", note: "Soft knees, push hips back and return." },
+  { name: "Side-to-side steps", duration: "1 min", note: "Step side to side, knees soft." },
+];
+
+const HIIT_COOL_DOWN = [
+  { name: "Hamstring stretch", duration: "1 min", note: "Gentle stretch, hold and breathe." },
+  { name: "Quadriceps stretch", duration: "1 min", note: "Hold a chair for balance if needed." },
+  { name: "Calf stretch", duration: "1 min", note: "Gentle stretch, both legs." },
+  { name: "Slow walking and deep breathing", duration: "1 min", note: "Easy walking until your breathing settles." },
+];
+
 export const APP_SAMPLE_PLANS = [
   // ────────────────────────────────────────────────────────────────────────
   // 1. Beginner Full Body — 3 days/week
@@ -228,6 +245,76 @@ export const APP_SAMPLE_PLANS = [
           { name: "Hip Thrust",             sets: 3, reps: "10-12", rest: 90,  note: "Barbell or machine. Squeeze at top." },
           { name: "Seated Calf Raise",      sets: 4, reps: "15-20", rest: 45,  note: "Soleus focus." },
         ],
+      },
+    ],
+  },
+
+  // ────────────────────────────────────────────────────────────────────────
+  // 4. 3-Day Dumbbell HIIT — Fat Loss + Muscle Maintenance
+  // Timed intervals: 40 sec work / 20 sec rest, 6 exercises, 3 rounds.
+  // Sets = rounds; the app's rest timer covers the 20 sec between sets.
+  // Per-side moves (Day 3 rows + suitcase march) stay one exercise with
+  // reps "40 sec each side" so the 6-exercise circuit and 25–30 min
+  // duration are preserved — the note tells the user when to switch sides.
+  // ────────────────────────────────────────────────────────────────────────
+  {
+    meta: { notes: "3-Day Dumbbell HIIT — Fat Loss + Muscle Maintenance" },
+    planType: "single_week",
+    includeWarmUp: true,
+    includeCoolDown: true,
+    // UI metadata (not used by normalizePlan)
+    _ui: {
+      badge: "bg-rose-600/20 text-rose-400 border-rose-500/30",
+      level: "Beginner",
+      daysLabel: "3 days/week",
+      description:
+        "A 25–30 minute dumbbell HIIT circuit for fat loss that keeps muscle: 6 exercises at 40 seconds work / 20 seconds rest, 3 rounds, on Monday, Wednesday and Friday. Just two dumbbells, a mat and a chair. No overhead presses — supported rows instead. Start light, focus on technique, and stop if anything hurts.",
+    },
+    days: [
+      {
+        label: "Monday",
+        short: "Day 1 — Full Body Strength",
+        title: "Day 1 — Full Body Strength",
+        warmUp: HIIT_WARM_UP,
+        exercises: [
+          { name: "Dumbbell Goblet Squat",      sets: 3, reps: "40 sec", rest: 20, note: "Circuit: do all 6 exercises in order, then repeat 2 more times (3 rounds). Rest 60–90 sec between rounds if needed. Hold one dumbbell against your chest. Bend your knees and lower your body, then stand up." },
+          { name: "Dumbbell Bent-Over Row",     sets: 3, reps: "40 sec", rest: 20, note: "Lean forward slightly with a straight back. Pull both dumbbells towards your waist." },
+          { name: "Dumbbell Romanian Deadlift", sets: 3, reps: "40 sec", rest: 20, note: "Hold dumbbells in front of your thighs. Push your hips backwards while lowering the weights, then stand up." },
+          { name: "Dumbbell Floor Press",       sets: 3, reps: "40 sec", rest: 20, note: "Lie on your back and push dumbbells upwards from chest level." },
+          { name: "Dumbbell Reverse Lunge",     sets: 3, reps: "40 sec", rest: 20, note: "Step backwards with one leg, lower your body gently and return to standing. Alternate legs." },
+          { name: "Fast Marching in Place",     sets: 3, reps: "40 sec", rest: 20, note: "March quickly in place, lifting your knees." },
+        ],
+        coolDown: HIIT_COOL_DOWN,
+      },
+      {
+        label: "Wednesday",
+        short: "Day 2 — Strength + Cardio",
+        title: "Day 2 — Strength + Cardio",
+        warmUp: HIIT_WARM_UP,
+        exercises: [
+          { name: "Dumbbell Sumo Squat",        sets: 3, reps: "40 sec", rest: 20, note: "Circuit: do all 6 exercises in order, then repeat 2 more times (3 rounds). Rest 60–90 sec between rounds if needed. Feet wider than shoulder-width apart. Hold one dumbbell and squat down." },
+          { name: "Dumbbell Farmer March",      sets: 3, reps: "40 sec", rest: 20, note: "Hold a dumbbell in each hand and march in place while keeping your back straight." },
+          { name: "Supported Split Squat",      sets: 3, reps: "40 sec", rest: 20, note: "Step one foot forward and one backwards. Bend your knees gently and lower your body. Use a chair for balance. Change legs halfway through the 40 seconds." },
+          { name: "Dumbbell Bent-Over Row",     sets: 3, reps: "40 sec", rest: 20, note: "Lean forward slightly with a straight back. Pull both dumbbells towards your waist." },
+          { name: "Dumbbell Floor Press",       sets: 3, reps: "40 sec", rest: 20, note: "Lie on your back and push dumbbells upwards from chest level." },
+          { name: "Side-to-Side Step Touch",    sets: 3, reps: "40 sec", rest: 20, note: "Step to your right, bring your left foot towards it, then repeat on the other side." },
+        ],
+        coolDown: HIIT_COOL_DOWN,
+      },
+      {
+        label: "Friday",
+        short: "Day 3 — Full Body Conditioning",
+        title: "Day 3 — Full Body Conditioning",
+        warmUp: HIIT_WARM_UP,
+        exercises: [
+          { name: "Dumbbell Squat",             sets: 3, reps: "40 sec", rest: 20, note: "Circuit: do all 6 exercises in order, then repeat 2 more times (3 rounds). Rest 60–90 sec between rounds if needed. Hold dumbbells at your sides and squat down slowly. Stand back up." },
+          { name: "Dumbbell Romanian Deadlift", sets: 3, reps: "40 sec", rest: 20, note: "Push your hips backwards while lowering dumbbells along your legs. Keep your back straight." },
+          { name: "Dumbbell Floor Press",       sets: 3, reps: "40 sec", rest: 20, note: "Lie on your back and push dumbbells upwards from chest level." },
+          { name: "Supported One-Arm Row",      sets: 3, reps: "40 sec each side", rest: 20, note: "Support yourself with one hand on a chair. Pull the dumbbell towards your waist. Do 40 seconds on one arm, then switch arms — both sides inside the same round." },
+          { name: "Dumbbell Suitcase March",    sets: 3, reps: "40 sec each side", rest: 20, note: "Hold one dumbbell in one hand and march in place. Keep your body straight without leaning. Do 40 seconds on one side, then switch hands." },
+          { name: "Standing Knee Drive",        sets: 3, reps: "40 sec", rest: 20, note: "Stand straight and bring one knee towards your chest, then alternate legs." },
+        ],
+        coolDown: HIIT_COOL_DOWN,
       },
     ],
   },

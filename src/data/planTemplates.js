@@ -830,6 +830,115 @@ export const planTemplates = [
       },
     ],
   },
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // 11. 3-Day Dumbbell HIIT — Fat Loss + Muscle Maintenance
+  // Timed intervals: 40 sec work / 20 sec rest, 6 exercises, 3 rounds.
+  // Per-side moves (Day 3 rows + suitcase march) stay one exercise with
+  // reps "40 sec each side" so the 6-exercise circuit and 25–30 min
+  // duration are preserved — the note tells the user when to switch sides.
+  // ──────────────────────────────────────────────────────────────────────────
+  {
+    slug: "3-day-dumbbell-hiit",
+    title: "3-Day Dumbbell HIIT Workout Plan — Fat Loss + Muscle Maintenance",
+    shortTitle: "3-Day Dumbbell HIIT",
+    description:
+      "A 25–30 minute dumbbell HIIT plan for fat loss that keeps muscle: 6 exercises at 40 seconds work / 20 seconds rest, 3 rounds, 3 days per week. Just two dumbbells, a mat and a chair — no overhead presses, supported rows instead.",
+    difficulty: "Beginner",
+    daysPerWeek: 3,
+    recommendedWeeks: "8 weeks",
+    category: "Fat Loss",
+    equipment: "dumbbells",
+    accent: "from-rose-600 to-pink-500",
+    badge: "bg-rose-600/20 text-rose-400 border-rose-500/30",
+    datePublished: "2026-11-05",
+    tags: ["dumbbell HIIT", "fat loss", "3 day workout", "home workout", "beginner", "HIIT", "dumbbell workout"],
+    overview:
+      "Three short dumbbell circuits per week — Monday, Wednesday and Friday — built for fat loss while holding on to muscle. Every session is the same simple format: a 5-minute warm-up, then 6 exercises at 40 seconds of work with 20 seconds of rest, repeated for 3 rounds, and a 3–5 minute cool-down. The whole workout takes 25–30 minutes and needs only two dumbbells, an exercise mat and a chair for support. There are no overhead presses — shoulder and back discomfort can affect form, so the plan uses supported rows instead. The goal is consistency, not exhausting yourself: combine these workouts with regular walking, adequate protein and a moderate calorie deficit for sustainable fat loss.",
+    keyBenefits: [
+      "Only 25–30 minutes per session, 3 days per week — easy to stick to",
+      "Timed intervals (40 sec work / 20 sec rest) keep intensity high without heavy weights",
+      "Full-body every session — squats, hinges, rows and presses in each workout",
+      "Minimal equipment: two dumbbells, a mat and a chair — train at home",
+      "Joint-friendly: no overhead presses, supported rows and a chair for balance",
+    ],
+    whoIsItFor:
+      "Anyone who wants to lose fat and keep muscle with short home workouts, especially if shoulder or back discomfort makes overhead pressing a bad idea. Start with light dumbbells and focus on technique — if 40 seconds is too difficult, start with 30 seconds and build up.",
+    progressionNotes:
+      "Increase dumbbell weight gradually as you get stronger. If 40 seconds per exercise is too difficult, start with 30 seconds and add 5 seconds each week until you reach 40. Rest 60–90 seconds between rounds if needed. After 8 weeks, move to heavier dumbbells or add a fourth round.",
+    warmUp: [
+      { name: "Walking in place", duration: "1 min", note: "Easy pace, arms swinging naturally." },
+      { name: "Arm circles", duration: "1 min", note: "Small circles, within a comfortable range." },
+      { name: "Bodyweight squats", duration: "1 min", note: "Slow and controlled, no weight." },
+      { name: "Gentle hip hinges", duration: "1 min", note: "Soft knees, push hips back and return." },
+      { name: "Side-to-side steps", duration: "1 min", note: "Step side to side, knees soft." },
+    ],
+    coolDown: [
+      { name: "Hamstring stretch", duration: "1 min", note: "Gentle stretch, hold and breathe." },
+      { name: "Quadriceps stretch", duration: "1 min", note: "Hold a chair for balance if needed." },
+      { name: "Calf stretch", duration: "1 min", note: "Gentle stretch, both legs." },
+      { name: "Slow walking and deep breathing", duration: "1 min", note: "Easy walking until your breathing settles." },
+    ],
+    rules: [
+      "Start with light dumbbells and focus on proper technique.",
+      "Rest for 20 seconds between exercises.",
+      "Rest for 60–90 seconds between rounds if needed.",
+      "If 40 seconds is too difficult, start with 30 seconds.",
+      "Increase dumbbell weight gradually as you get stronger.",
+      "Stop if you experience pain, dizziness or unusual discomfort.",
+      "No overhead presses — shoulder and back discomfort can affect form. Use supported rows rather than forcing movements.",
+    ],
+    weeklySchedule: [
+      { day: "Monday", activity: "Day 1 — Full Body Strength (workout)" },
+      { day: "Tuesday", activity: "Rest or 20–30 min walking" },
+      { day: "Wednesday", activity: "Day 2 — Strength + Cardio (workout)" },
+      { day: "Thursday", activity: "Rest or 20–30 min walking" },
+      { day: "Friday", activity: "Day 3 — Full Body Conditioning (workout)" },
+      { day: "Saturday", activity: "Optional light walking" },
+      { day: "Sunday", activity: "Rest and recovery" },
+    ],
+    days: [
+      {
+        day: "Day 1 — Full Body Strength",
+        label: "Monday",
+        accent: "from-rose-600 to-pink-500",
+        exercises: [
+          { name: "Dumbbell Goblet Squat", sets: 3, reps: "40 sec", rest: 20, note: "Hold one dumbbell against your chest. Bend your knees and lower your body, then stand up." },
+          { name: "Dumbbell Bent-Over Row", sets: 3, reps: "40 sec", rest: 20, note: "Lean forward slightly with a straight back. Pull both dumbbells towards your waist." },
+          { name: "Dumbbell Romanian Deadlift", sets: 3, reps: "40 sec", rest: 20, note: "Hold dumbbells in front of your thighs. Push your hips backwards while lowering the weights, then stand up." },
+          { name: "Dumbbell Floor Press", sets: 3, reps: "40 sec", rest: 20, note: "Lie on your back and push dumbbells upwards from chest level." },
+          { name: "Dumbbell Reverse Lunge", sets: 3, reps: "40 sec", rest: 20, note: "Step backwards with one leg, lower your body gently and return to standing. Alternate legs." },
+          { name: "Fast Marching in Place", sets: 3, reps: "40 sec", rest: 20, note: "March quickly in place, lifting your knees." },
+        ],
+      },
+      {
+        day: "Day 2 — Strength + Cardio",
+        label: "Wednesday",
+        accent: "from-rose-600 to-pink-500",
+        exercises: [
+          { name: "Dumbbell Sumo Squat", sets: 3, reps: "40 sec", rest: 20, note: "Feet wider than shoulder-width apart. Hold one dumbbell and squat down." },
+          { name: "Dumbbell Farmer March", sets: 3, reps: "40 sec", rest: 20, note: "Hold a dumbbell in each hand and march in place while keeping your back straight." },
+          { name: "Supported Split Squat", sets: 3, reps: "40 sec", rest: 20, note: "Step one foot forward and one backwards. Bend your knees gently and lower your body. Use a chair for balance. Change legs halfway through the 40 seconds." },
+          { name: "Dumbbell Bent-Over Row", sets: 3, reps: "40 sec", rest: 20, note: "Lean forward slightly with a straight back. Pull both dumbbells towards your waist." },
+          { name: "Dumbbell Floor Press", sets: 3, reps: "40 sec", rest: 20, note: "Lie on your back and push dumbbells upwards from chest level." },
+          { name: "Side-to-Side Step Touch", sets: 3, reps: "40 sec", rest: 20, note: "Step to your right, bring your left foot towards it, then repeat on the other side." },
+        ],
+      },
+      {
+        day: "Day 3 — Full Body Conditioning",
+        label: "Friday",
+        accent: "from-rose-600 to-pink-500",
+        exercises: [
+          { name: "Dumbbell Squat", sets: 3, reps: "40 sec", rest: 20, note: "Hold dumbbells at your sides and squat down slowly. Stand back up." },
+          { name: "Dumbbell Romanian Deadlift", sets: 3, reps: "40 sec", rest: 20, note: "Push your hips backwards while lowering dumbbells along your legs. Keep your back straight." },
+          { name: "Dumbbell Floor Press", sets: 3, reps: "40 sec", rest: 20, note: "Lie on your back and push dumbbells upwards from chest level." },
+          { name: "Supported One-Arm Row", sets: 3, reps: "40 sec each side", rest: 20, note: "Support yourself with one hand on a chair. Pull the dumbbell towards your waist. Do 40 seconds on one arm, then switch arms — both sides inside the same round." },
+          { name: "Dumbbell Suitcase March", sets: 3, reps: "40 sec each side", rest: 20, note: "Hold one dumbbell in one hand and march in place. Keep your body straight without leaning. Do 40 seconds on one side, then switch hands." },
+          { name: "Standing Knee Drive", sets: 3, reps: "40 sec", rest: 20, note: "Stand straight and bring one knee towards your chest, then alternate legs." },
+        ],
+      },
+    ],
+  },
 ];
 
 export function getTemplateBySlug(slug) {

@@ -3,9 +3,18 @@
  * Update this file when releasing new features or fixes
  */
 
-export const APP_VERSION = "1.6.0";
+export const APP_VERSION = "1.7.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.7.0",
+    date: "2026-11-05",
+    title: "New Plan: 3-Day Dumbbell HIIT",
+    changes: [
+      "🏋️ New ready-made plan: 3-Day Dumbbell HIIT for fat loss + muscle maintenance — 40 sec work / 20 sec rest, 6 exercises, 3 rounds, Mon/Wed/Fri, with warm-up, cool-down and weekly schedule included",
+      "📋 New plan page at /plans/3-day-dumbbell-hiit with the full program, warm-up, cool-down, weekly calendar and important rules",
+    ],
+  },
   {
     version: "1.6.0",
     date: "2026-11-05",

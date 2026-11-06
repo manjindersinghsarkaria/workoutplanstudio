@@ -12,12 +12,14 @@ const GOAL_FILTERS = [
   { id: "Strength", label: "Strength" },
   { id: "Hypertrophy", label: "Hypertrophy" },
   { id: "Hybrid Strength/Hypertrophy", label: "Hybrid" },
+  { id: "Fat Loss", label: "Fat Loss" },
 ];
 
 const EQUIPMENT_FILTERS = [
   { id: "all", label: "Any equipment" },
   { id: "machines", label: "No barbell" },
   { id: "barbell", label: "Barbell only" },
+  { id: "dumbbells", label: "Dumbbells" },
   { id: "full", label: "Full gym" },
 ];
 
@@ -33,6 +35,7 @@ const EQUIPMENT_LABELS = {
   full: { label: "Full gym", style: "bg-amber-600/10 text-amber-400 border-amber-500/20" },
   barbell: { label: "Barbell only", style: "bg-amber-600/10 text-amber-400 border-amber-500/20" },
   machines: { label: "No barbell", style: "bg-emerald-600/10 text-emerald-400 border-emerald-500/20" },
+  dumbbells: { label: "Dumbbells + mat", style: "bg-emerald-600/10 text-emerald-400 border-emerald-500/20" },
 };
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -167,7 +170,7 @@ export default function PlanTemplatesIndexPage() {
     "@type": "CollectionPage",
     name: "Workout Plan Templates — WorkoutPlanStudio",
     description:
-      "10 pre-built workout programs: PPL, Bro Split, 5/3/1, Upper Lower, StrongLifts, Starting Strength, PHUL, Arnold Split, GZCLP, and Beginner Full Body.",
+      "11 pre-built workout programs: PPL, Bro Split, 5/3/1, Upper Lower, StrongLifts, Starting Strength, PHUL, Arnold Split, GZCLP, Beginner Full Body, and 3-Day Dumbbell HIIT.",
     url: "https://www.workoutplanstudio.ca/plans",
     publisher: {
       "@type": "Organization",
@@ -213,7 +216,7 @@ export default function PlanTemplatesIndexPage() {
             Pre-Built Programs
           </span>
           <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight">
-            10 Proven Workout Plans
+            {planTemplates.length} Proven Workout Plans
           </h1>
           <p className="text-slate-400 text-base leading-relaxed">
             From beginner barbell programs to advanced 6-day splits. Filter by goal and equipment to find the right fit, then load any plan directly into WorkoutPlanStudio.

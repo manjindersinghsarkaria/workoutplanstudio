@@ -803,6 +803,202 @@ export const exerciseLibrary = [
       { name: "Trap Bar Carry", note: "Heavier loads with trap bar." },
     ],
   },
+
+  // ── DUMBBELL HIIT ──────────────────────────────────────────────────────────
+  // Timed-interval moves for the 3-Day Dumbbell HIIT plan (40 sec work /
+  // 20 sec rest, 3 rounds). Mostly dumbbell + bodyweight, no barbell needed.
+  {
+    name: "Dumbbell Floor Press",
+    aliases: ["Floor Press", "DB Floor Press"],
+    instructions: [
+      "Lie on your back, knees bent, feet flat on the floor.",
+      "Hold a dumbbell in each hand at chest level, elbows resting on the floor.",
+      "Press both dumbbells up until your arms are extended.",
+      "Lower with control until your elbows touch the floor again.",
+    ],
+    formTips: ["The floor stops your elbows — a shoulder-friendly press with no overhead work.", "Keep your wrists stacked over your elbows."],
+    mediaUrl: yt("Dumbbell Floor Press"),
+    alternates: [
+      { name: "Dumbbell Bench Press", note: "Same press pattern with more range of motion." },
+      { name: "Push-Up", note: "Bodyweight alternative, no equipment needed." },
+    ],
+  },
+  {
+    name: "Dumbbell Reverse Lunge",
+    aliases: ["Reverse Lunge", "DB Reverse Lunge"],
+    instructions: [
+      "Stand tall holding a dumbbell in each hand at your sides.",
+      "Step backwards with one leg and lower until both knees are near 90°.",
+      "Drive through your front heel to return to standing.",
+      "Alternate legs each rep.",
+    ],
+    formTips: ["Keep your torso upright — don't lean forward as you step back.", "Front knee tracks over your toes, never caving inward."],
+    mediaUrl: yt("Dumbbell Reverse Lunge"),
+    alternates: [
+      { name: "Bulgarian Split Squat", note: "Same leg, rear foot elevated — more stability demand." },
+      { name: "Goblet Squat", note: "Bilateral squat alternative." },
+    ],
+  },
+  {
+    name: "Dumbbell Squat",
+    aliases: ["DB Squat", "Dumbbell Squats"],
+    instructions: [
+      "Hold a dumbbell in each hand at your sides.",
+      "Stand feet shoulder-width apart, toes slightly out.",
+      "Squat down slowly, knees tracking over your toes.",
+      "Stand back up, driving through your heels.",
+    ],
+    formTips: ["Keep your chest tall — don't let the weights pull you forward.", "Slow down, faster up."],
+    mediaUrl: yt("Dumbbell Squat"),
+    alternates: [
+      { name: "Goblet Squat", note: "Weight held at your chest — easier to stay upright." },
+      { name: "Leg Press", note: "Machine alternative." },
+    ],
+  },
+  {
+    name: "Dumbbell Sumo Squat",
+    aliases: ["Sumo Squat", "DB Sumo Squat"],
+    instructions: [
+      "Stand with feet wider than shoulder-width, toes turned out about 45°.",
+      "Hold one dumbbell with both hands in front of your body.",
+      "Squat down, keeping your chest tall and knees tracking over your toes.",
+      "Drive through your heels to stand.",
+    ],
+    formTips: ["Knees track over your toes — don't let them cave inward.", "Keep the dumbbell close to your body throughout."],
+    mediaUrl: yt("Dumbbell Sumo Squat"),
+    alternates: [
+      { name: "Goblet Squat", note: "Narrower stance, same front-loaded hold." },
+      { name: "Dumbbell Squat", note: "Standard-stance version." },
+    ],
+  },
+  {
+    name: "Supported Split Squat",
+    aliases: ["Split Squat", "Chair-Supported Split Squat", "Supported Split Squats"],
+    instructions: [
+      "Stand next to a chair and rest one hand on it for balance.",
+      "Step one foot forward and the other back, feet hip-width apart.",
+      "Bend both knees and lower straight down, torso tall.",
+      "Switch legs halfway through the interval.",
+    ],
+    formTips: ["Use the chair for balance only — don't pull yourself up with it.", "Keep your front knee over your ankle, not past your toes."],
+    mediaUrl: yt("Supported Split Squat"),
+    alternates: [
+      { name: "Bulgarian Split Squat", note: "Rear foot elevated — harder, no chair needed." },
+      { name: "Dumbbell Reverse Lunge", note: "Dynamic version of the same pattern." },
+    ],
+  },
+  {
+    name: "Dumbbell Bent-Over Row",
+    aliases: ["Bent-Over Dumbbell Row", "DB Bent-Over Row", "Dumbbell Bent-over Rows"],
+    instructions: [
+      "Hinge forward with a slight knee bend, keeping your back flat.",
+      "Hold a dumbbell in each hand, arms hanging toward the floor.",
+      "Pull both dumbbells to your waist, elbows close to your body.",
+      "Lower with control — don't let the weights drop.",
+    ],
+    formTips: ["Keep your back flat — no rounding, even as you tire.", "Squeeze your shoulder blades together at the top."],
+    mediaUrl: yt("Dumbbell Bent Over Row"),
+    alternates: [
+      { name: "Dumbbell Row", note: "One arm at a time, supported on a bench." },
+      { name: "Seated Cable Row", note: "Machine version of the same pull." },
+    ],
+  },
+  {
+    name: "Supported One-Arm Row",
+    aliases: ["Supported One-arm Rows", "One-Arm Dumbbell Row", "Single-Arm Dumbbell Row", "Chair-Supported Row"],
+    instructions: [
+      "Place one hand on a chair for support and hinge forward with a flat back.",
+      "Hold a dumbbell in your free hand, arm hanging toward the floor.",
+      "Pull the dumbbell to your waist, elbow close to your body.",
+      "Complete the interval on one arm, then switch arms.",
+    ],
+    formTips: ["Keep your hips level — don't rotate as you pull.", "Pull your elbow past your torso for a full contraction."],
+    mediaUrl: yt("One Arm Dumbbell Row"),
+    alternates: [
+      { name: "Dumbbell Row", note: "Same movement braced on a bench." },
+      { name: "Dumbbell Bent-Over Row", note: "Both arms together." },
+    ],
+  },
+  {
+    name: "Dumbbell Farmer March",
+    aliases: ["Farmer's March", "Farmer March", "Dumbbell Farmer's March"],
+    instructions: [
+      "Hold a dumbbell in each hand at your sides.",
+      "Stand tall — shoulders back, core braced.",
+      "March in place, lifting your knees toward hip height.",
+      "Keep a steady, controlled rhythm — don't rush.",
+    ],
+    formTips: ["Don't lean or sway — keep the weights hanging at your sides.", "Breathe steadily and brace your core on every step."],
+    mediaUrl: yt("Dumbbell Farmer March"),
+    alternates: [
+      { name: "Farmer Carry", note: "Walk forward instead of marching in place." },
+      { name: "Fast Marching in Place", note: "Bodyweight version, no dumbbells." },
+    ],
+  },
+  {
+    name: "Dumbbell Suitcase March",
+    aliases: ["Suitcase March", "Suitcase Carry March"],
+    instructions: [
+      "Hold one dumbbell in one hand at your side.",
+      "Stand tall with shoulders level — don't lean away from the weight.",
+      "March in place, lifting your knees toward hip height.",
+      "Complete the interval on one side, then switch hands.",
+    ],
+    formTips: ["Stay straight — resist the urge to lean away from the loaded side.", "Brace your core hard to keep from tipping sideways."],
+    mediaUrl: yt("Dumbbell Suitcase March"),
+    alternates: [
+      { name: "Dumbbell Farmer March", note: "Both hands loaded — balanced version." },
+      { name: "Farmer Carry", note: "Walking version with a one-sided load." },
+    ],
+  },
+  {
+    name: "Fast Marching in Place",
+    aliases: ["Fast March in Place", "High Knees March", "Marching in Place"],
+    instructions: [
+      "Stand tall, arms at your sides.",
+      "March quickly in place, lifting your knees toward hip height.",
+      "Pump your arms naturally as you march.",
+      "Keep a quick, steady rhythm for the full interval.",
+    ],
+    formTips: ["Land softly on the balls of your feet.", "Keep your chest up — don't hunch forward as you tire."],
+    mediaUrl: yt("Fast Marching in Place exercise"),
+    alternates: [
+      { name: "Dumbbell Farmer March", note: "Add dumbbells for more challenge." },
+      { name: "Standing Knee Drive", note: "Slower, more controlled knee drive." },
+    ],
+  },
+  {
+    name: "Standing Knee Drive",
+    aliases: ["Standing Knee Drives", "Knee Drive"],
+    instructions: [
+      "Stand tall, feet hip-width apart.",
+      "Drive one knee up toward your chest.",
+      "Lower with control and alternate legs.",
+      "Keep a steady rhythm — brace your core on every rep.",
+    ],
+    formTips: ["Brace your core — don't lean back as the knee comes up.", "Drive the knee up; don't just lift the foot."],
+    mediaUrl: yt("Standing Knee Drive exercise"),
+    alternates: [
+      { name: "Fast Marching in Place", note: "Faster, continuous marching." },
+      { name: "Dumbbell Farmer March", note: "Loaded marching version." },
+    ],
+  },
+  {
+    name: "Side-to-Side Step Touch",
+    aliases: ["Side-to-side Step Touches", "Step Touch", "Lateral Step Touch"],
+    instructions: [
+      "Stand with your feet together, knees soft.",
+      "Step to the right, then bring your left foot to meet it.",
+      "Step to the left, then bring your right foot to meet it.",
+      "Keep a steady side-to-side rhythm for the full interval.",
+    ],
+    formTips: ["Stay light on your feet — don't stomp.", "Keep your knees soft; never lock them."],
+    mediaUrl: yt("Side to Side Step Touch exercise"),
+    alternates: [
+      { name: "Fast Marching in Place", note: "Forward marching cardio." },
+      { name: "Standing Knee Drive", note: "Stationary cardio alternative." },
+    ],
+  },
 ];
 
 /**

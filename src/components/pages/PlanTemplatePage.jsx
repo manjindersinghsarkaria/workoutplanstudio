@@ -10,6 +10,7 @@ const EQUIPMENT_LABELS = {
   full: { label: "Full gym", style: "bg-amber-600/10 text-amber-400 border-amber-500/20" },
   barbell: { label: "Barbell only", style: "bg-amber-600/10 text-amber-400 border-amber-500/20" },
   machines: { label: "No barbell", style: "bg-emerald-600/10 text-emerald-400 border-emerald-500/20" },
+  dumbbells: { label: "Dumbbells + mat", style: "bg-emerald-600/10 text-emerald-400 border-emerald-500/20" },
 };
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
@@ -234,6 +235,82 @@ export default function PlanTemplatePage() {
             ))}
           </div>
         </section>
+
+        {/* Warm-up — only templates that define one (e.g. timed HIIT plans) */}
+        {template.warmUp?.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold text-white">Warm-Up — 5 Minutes</h2>
+            <p className="text-slate-400 leading-relaxed text-sm">
+              Do this before every workout, one minute per move.
+            </p>
+            <div className="rounded-2xl border border-slate-800 px-4 divide-y divide-slate-800">
+              {template.warmUp.map((w) => (
+                <div key={w.name} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">{w.name}</div>
+                    {w.note && <div className="text-xs text-slate-500 mt-0.5">{w.note}</div>}
+                  </div>
+                  <span className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 font-medium shrink-0">
+                    {w.duration}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Cool-down — only templates that define one */}
+        {template.coolDown?.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold text-white">Cool-Down — 3–5 Minutes</h2>
+            <p className="text-slate-400 leading-relaxed text-sm">
+              Do this after every workout to bring your heart rate down.
+            </p>
+            <div className="rounded-2xl border border-slate-800 px-4 divide-y divide-slate-800">
+              {template.coolDown.map((c) => (
+                <div key={c.name} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">{c.name}</div>
+                    {c.note && <div className="text-xs text-slate-500 mt-0.5">{c.note}</div>}
+                  </div>
+                  <span className="rounded-lg border border-slate-700 bg-slate-800 px-2.5 py-1 text-xs text-slate-300 font-medium shrink-0">
+                    {c.duration}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Weekly schedule — only templates that define one */}
+        {template.weeklySchedule?.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold text-white">Your Week</h2>
+            <div className="rounded-2xl border border-slate-800 px-4 divide-y divide-slate-800">
+              {template.weeklySchedule.map((s) => (
+                <div key={s.day} className="flex items-center justify-between gap-3 py-3">
+                  <span className="text-sm font-semibold text-white w-24 shrink-0">{s.day}</span>
+                  <span className="text-sm text-slate-400 text-right">{s.activity}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Important rules — only templates that define them */}
+        {template.rules?.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-2xl font-bold text-white">Important Rules</h2>
+            <ul className="space-y-2">
+              {template.rules.map((r, i) => (
+                <li key={i} className="flex gap-3 text-slate-400 leading-relaxed">
+                  <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-rose-500" />
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Progression */}
         <section className="space-y-3">
