@@ -7,6 +7,7 @@ import {
 import { SectionCard } from "@/components/ui/SectionCard";
 import { normalizePlan, validatePlanShape } from "@/helpers";
 import { enrichPlan } from "@/utils/enrichPlan";
+import { buildBackup, parseBackup } from "@/utils/backup";
 import { APP_SAMPLE_PLANS } from "@/data/appSamplePlans";
 import { buildShareUrl } from "@/utils/sharePlan";
 import { DEFAULT_PLAN } from "@/constants";
@@ -18,11 +19,32 @@ const AI_TOOLS = [
 ];
 
 const OPTION_ROWS = [
-    { label: "Plan type",  key: "planType",   options: ["single_week", "multi_week"] },
-    { label: "Goal",       key: "goal",        options: ["build muscle", "lose fat", "endurance"] },
-    { label: "Experience", key: "experience",  options: ["beginner", "intermediate", "advanced"] },
-    { label: "Days/week",  key: "days",        options: ["3", "4", "5", "6"] },
-    { label: "Equipment",  key: "equipment",   options: ["full gym", "dumbbells", "home", "bodyweight"] },
+    { label: "Plan type",  key: "planType",   options: [
+        { value: "single_week", label: "Single week" },
+        { value: "multi_week", label: "Multi-week" },
+    ] },
+    { label: "Goal",       key: "goal",        options: [
+        { value: "build muscle", label: "Build muscle" },
+        { value: "lose fat", label: "Lose fat" },
+        { value: "endurance", label: "Endurance" },
+    ] },
+    { label: "Experience", key: "experience",  options: [
+        { value: "beginner", label: "Beginner" },
+        { value: "intermediate", label: "Intermediate" },
+        { value: "advanced", label: "Advanced" },
+    ] },
+    { label: "Days/week",  key: "days",        options: [
+        { value: "3", label: "3" },
+        { value: "4", label: "4" },
+        { value: "5", label: "5" },
+        { value: "6", label: "6" },
+    ] },
+    { label: "Equipment",  key: "equipment",   options: [
+        { value: "full gym", label: "Full gym" },
+        { value: "dumbbells", label: "Dumbbells" },
+        { value: "home", label: "Home" },
+        { value: "bodyweight", label: "Bodyweight" },
+    ] },
 ];
 
 const TOGGLE_ROWS = [
@@ -116,12 +138,13 @@ const DEFAULT_PROMPT_OPTIONS = {
 
 import { trackEvent } from "@/analytics.js";
 
-export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDayId, setView, initialPromptOptions }) {
+export default function PlanView({ plan, historyLog = [], onApplyPlan, onResetPlan, restoreBackup, setSelectedDayId, setView, initialPromptOptions }) {
     const [pasteText, setPasteText]     = useState("");
     const [status, setStatus]           = useState("");
     const [promptCopied, setPromptCopied] = useState(null); // null | "copy" | ai-tool label
     const [expandedSample, setExpandedSample] = useState(null); // index of expanded plan card
     const fileInputRef = useRef(null);
+    const backupInputRef = useRef(null);
 
     const [promptOptions, setPromptOptions] = useState(initialPromptOptions ?? DEFAULT_PROMPT_OPTIONS);
 
@@ -195,6 +218,42 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
         setStatus("✅ Plan saved to your device");
     }
 
+    // ── Backup: export all data (plan + history) as a local JSON file ─────
+    function exportBackup() {
+        const blob = new Blob([JSON.stringify(buildBackup({ plan, sessions: historyLog }), null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "workoutplanstudio-backup.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus("✅ Backup saved to your device — your plan and history are in the file");
+    }
+
+    // ── Backup: import a previously exported backup file ──────────────────
+    function importBackupFile(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const backup = parseBackup(e.target?.result);
+                if (restoreBackup) {
+                    await restoreBackup(backup);
+                } else {
+                    onApplyPlan(backup.plan, promptOptions);
+                }
+                setStatus(`✅ Backup imported — plan and ${backup.sessions.length} session${backup.sessions.length === 1 ? "" : "s"} restored`);
+                trackEvent("restore_backup");
+            } catch (err) {
+                const msg = err instanceof Error ? err.message : null;
+                setStatus(msg ? `❌ ${msg}` : "❌ Couldn't import that backup file.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = "";
+    }
+
     // ── Reset to default ───────────────────────────────────────────────────
     function resetToDefault() {
         onResetPlan();
@@ -262,20 +321,20 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                     </div>
 
                     {/* Option pickers */}
-                    <div className="rounded-xl border border-blue-900/50 bg-blue-950/20 p-3">
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-950/20">
                         <div className="mb-2.5 text-xs font-bold uppercase tracking-wide text-blue-400">Customise your plan</div>
                         <div className="grid grid-cols-2 gap-x-3 gap-y-2.5">
                             {OPTION_ROWS.map(({ label, key, options }) => (
                                 <div key={key}>
-                                    <label htmlFor={`opt-${key}`} className="mb-1 block text-xs font-semibold text-slate-300">{label}</label>
+                                    <label htmlFor={`opt-${key}`} className="mb-1 block text-xs font-semibold text-slate-700 dark:text-slate-300">{label}</label>
                                     <select
                                         id={`opt-${key}`}
                                         value={promptOptions[key]}
                                         onChange={(e) => setOption(key, e.target.value)}
-                                        className="w-full rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1.5 text-xs font-bold text-white outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400/40"
+                                        className="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-400/40 dark:border-slate-600 dark:bg-slate-800 dark:text-white"
                                     >
                                         {options.map(opt => (
-                                            <option key={opt} value={opt}>{opt}</option>
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -368,17 +427,17 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                     <div className="mt-0.5 text-base font-black">Use a ready-made plan</div>
                 </div>
 
-                <div className="flex flex-col gap-2 p-4 bg-slate-900">
+                <div className="flex flex-col gap-2 p-4 bg-slate-100 dark:bg-slate-900">
                     {APP_SAMPLE_PLANS.map((sample, idx) => {
                         const { badge, level, daysLabel, description } = sample._ui;
                         const isExpanded = expandedSample === idx;
 
                         return (
-                            <div key={idx} className="rounded-2xl border border-slate-700 bg-slate-800 overflow-hidden">
+                            <div key={idx} className="rounded-2xl border border-slate-200 bg-white overflow-hidden dark:border-slate-700 dark:bg-slate-800">
                                 {/* Card header — always visible */}
                                 <button
                                     onClick={() => setExpandedSample(isExpanded ? null : idx)}
-                                    className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-slate-700/60 transition-colors"
+                                    className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-slate-100 transition-colors dark:hover:bg-slate-700/60"
                                 >
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
@@ -387,7 +446,7 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                                             </span>
                                             <span className="text-xs text-slate-400">{daysLabel}</span>
                                         </div>
-                                        <div className="mt-1 text-sm font-bold text-white truncate">
+                                        <div className="mt-1 text-sm font-bold text-slate-900 truncate dark:text-white">
                                             {sample.meta.notes}
                                         </div>
                                     </div>
@@ -396,7 +455,7 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
 
                                 {/* Expandable detail */}
                                 {isExpanded && (
-                                    <div className="border-t border-slate-700 bg-slate-900/60 px-4 py-3 space-y-3">
+                                    <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 space-y-3 dark:border-slate-700 dark:bg-slate-900/60">
                                         <p className="text-xs text-slate-400 leading-relaxed">{description}</p>
 
                                         {/* Day pills */}
@@ -404,7 +463,7 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                                             {sample.days.map((d) => (
                                                 <span
                                                     key={d.short}
-                                                    className="rounded-lg border border-slate-600 bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-300"
+                                                    className="rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300"
                                                 >
                                                     {d.short}
                                                 </span>
@@ -441,7 +500,7 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                             onChange={(e) => setPasteText(e.target.value)}
                             aria-label="Paste AI-generated plan here"
                             placeholder="Paste the AI response here, then tap Apply Plan..."
-                            className="min-h-[140px] w-full rounded-2xl border border-slate-600 bg-slate-800 p-3 text-sm text-white outline-none placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+                            className="min-h-[140px] w-full rounded-2xl border border-slate-300 bg-white p-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                             spellCheck={false}
                         />
                         {pasteText.length > 0 && (
@@ -464,7 +523,7 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                     </button>
 
                     {status && (
-                        <div role="status" aria-live="polite" className="rounded-xl border border-slate-700 bg-slate-800 p-2.5 text-xs font-semibold text-slate-100">
+                        <div role="status" aria-live="polite" className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
                             {status}
                         </div>
                     )}
@@ -474,8 +533,8 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
             {/* ── Manage current plan ── */}
             <SectionCard className="p-4">
                 <div className="mb-3 text-sm font-black text-white">Manage Current Plan</div>
-                <div className="mb-3 rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-400">
-                    Active: <span className="font-bold text-white">{currentPlanName}</span>
+                <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                    Active: <span className="font-bold text-slate-900 dark:text-white">{currentPlanName}</span>
                     {plan?.days?.length ? ` · ${plan.days.length} day${plan.days.length !== 1 ? "s" : ""}` : ""}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -487,7 +546,7 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                     </button>
                     <button
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800 px-3 py-2.5 text-xs font-black text-slate-300 hover:border-slate-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-black text-slate-600 hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-white"
                     >
                         <Upload className="h-3.5 w-3.5" aria-hidden="true" />Load Saved Plan
                     </button>
@@ -502,18 +561,32 @@ export default function PlanView({ plan, onApplyPlan, onResetPlan, setSelectedDa
                                 setStatus(`❌ ${err.message}`);
                             }
                         }}
-                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800 px-3 py-2.5 text-xs font-black text-slate-300 hover:border-slate-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-black text-slate-600 hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-white"
                     >
                         <Share2 className="h-3.5 w-3.5" aria-hidden="true" />Share Plan
                     </button>
                     <button
+                        onClick={exportBackup}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-black text-slate-600 hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-white"
+                    >
+                        <Download className="h-3.5 w-3.5" aria-hidden="true" />Export all data (JSON)
+                    </button>
+                    <button
+                        onClick={() => backupInputRef.current?.click()}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-black text-slate-600 hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-white"
+                    >
+                        <Upload className="h-3.5 w-3.5" aria-hidden="true" />Import backup
+                    </button>
+                    <button
                         onClick={resetToDefault}
-                        className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-slate-600 bg-slate-800 px-3 py-2.5 text-xs font-black text-slate-400 hover:border-red-800 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                        className="col-span-2 flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-black text-slate-500 hover:border-red-300 hover:text-red-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:border-red-800 dark:hover:text-red-400"
                     >
                         <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />Restore Default Plan
                     </button>
                 </div>
+                <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">Your data lives only on this device — export a backup so a cleared browser doesn't wipe your history.</p>
                 <input ref={fileInputRef} type="file" accept=".json,application/json" className="hidden" onChange={importPlanFile} />
+                <input ref={backupInputRef} type="file" accept=".json,application/json" className="hidden" onChange={importBackupFile} />
             </SectionCard>
         </>
     );

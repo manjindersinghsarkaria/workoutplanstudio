@@ -16,9 +16,11 @@ import { Toast } from "@/components/ui/Toast";
 import { AlternateSelector } from "@/components/ui/AlternateSelector";
 
 import { cn } from "@/utils";
-import { getCompletedSets, getWeightValue, formatTime } from "@/helpers";
+import { getCompletedSets, getWeightValue, formatTime, parseWeightEntry } from "@/helpers";
 import { THEME_PRESETS } from "@/constants";
-import { buildSubtitle, calcProgressPercent, repsDisplay, currentSetDisplay, findActiveExercise } from "@/utils/workoutDerived";
+import { buildSubtitle, calcProgressPercent, repsDisplay, currentSetDisplay, findActiveExercise, calcPersonalRecords } from "@/utils/workoutDerived";
+import { getLastPerformanceForExercise } from "@/utils/previousPerformance";
+import { estimateSessionVolume } from "@/utils/sessionSummary";
 import { useBeep } from "@/hooks/useBeep";
 import { useEffectiveExercise } from "@/hooks/useEffectiveExercise";
 
@@ -40,6 +42,7 @@ export default function WorkoutView({
     setTimerRunning,
     restOverride,
     setRestOverride,
+    historyLog = [],
 }) {
 
     const [heroExpanded, setHeroExpanded] = useState(true);
@@ -59,6 +62,11 @@ export default function WorkoutView({
     const [showCoolDown, setShowCoolDown] = useState(false);
     const [toast, setToast] = useState(null);
     const [showCompletedTimer, setShowCompletedTimer] = useState(true);
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [summary, setSummary] = useState(null);
+    const [timerSuppressed, setTimerSuppressed] = useState(false);
+    const historyLogRef = useRef(historyLog);
+    historyLogRef.current = historyLog;
     const [selectedAlternates, setSelectedAlternates] = useState({});
 
     // Request notification permission on first timer start
@@ -78,6 +86,7 @@ export default function WorkoutView({
 
     // Hide the completed timer after 3 seconds
     useEffect(() => {
+        if (timerSuppressed) return;
         if (timerSeconds === 0 && !timerRunning) {
             setShowCompletedTimer(true);
             const hideTimer = setTimeout(() => {
@@ -87,7 +96,7 @@ export default function WorkoutView({
         } else if (timerRunning || timerSeconds > 0) {
             setShowCompletedTimer(true);
         }
-    }, [timerSeconds, timerRunning]);
+    }, [timerSeconds, timerRunning, timerSuppressed]);
 
     useEffect(() => {
         const id = setInterval(() => {
@@ -188,6 +197,49 @@ export default function WorkoutView({
         workoutStepId ? (selectedAlternates[workoutStepId] ?? null) : null
     );
 
+    // Previous performance (GAP-01): most recent history for the current exercise.
+    const prevPerformance = useMemo(
+        () => (currentExercise ? getLastPerformanceForExercise(historyLog, effectiveExercise.name, currentExercise.name) : null),
+        [historyLog, currentExercise, effectiveExercise]
+    );
+    const personalRecords = useMemo(() => calcPersonalRecords(historyLog), [historyLog]);
+    const bestWeight = prevPerformance
+        ? (personalRecords[effectiveExercise.name] ?? personalRecords[currentExercise.name] ?? null)
+        : null;
+    const prevBestWeight = prevPerformance?.weights?.length
+        ? prevPerformance.weights.reduce((a, b) => {
+            const ak = a.unit === "lb" ? a.value * 0.453592 : a.value;
+            const bk = b.unit === "lb" ? b.value * 0.453592 : b.value;
+            return bk > ak ? b : a;
+        })
+        : null;
+    // Effective rest for this exercise: session-only override wins, else plan rest.
+    const effectiveRest = restOverride ?? effectiveExercise?.rest ?? 60;
+    const currentWeightValue = getWeightValue(weightsMap, selectedDayId, effectiveExercise?.id ?? "");
+    const weightInvalid = currentWeightValue.trim() !== "" && !parseWeightEntry(currentWeightValue);
+
+    function buildSummaryFromSnapshot(snapshot, historyBefore) {
+        const totalSets = snapshot.completedExercises.reduce((sum, ex) => sum + ex.totalSets, 0);
+        const completedSets = snapshot.completedExercises.reduce((sum, ex) => sum + ex.completedSetIds.length, 0);
+        const percent = totalSets > 0 ? Math.round((completedSets / totalSets) * 100) : 0;
+        const volumeKg = estimateSessionVolume(snapshot, exercises);
+        const prsBefore = calcPersonalRecords(historyBefore);
+        const prsHit = [];
+        for (const ex of snapshot.completedExercises) {
+            let best = null;
+            for (const log of ex.setLogs ?? []) {
+                if (!log.weight) continue;
+                const kg = log.weight.unit === "lb" ? log.weight.value * 0.453592 : log.weight.value;
+                if (!best || kg > best.kg) best = { kg, weight: log.weight };
+            }
+            if (!best) continue;
+            const prev = prsBefore[ex.name] ?? (ex.baseExerciseName ? prsBefore[ex.baseExerciseName] : undefined);
+            const prevKg = prev ? (prev.unit === "lb" ? prev.weight * 0.453592 : prev.weight) : -Infinity;
+            if (best.kg > prevKg) prsHit.push({ name: ex.name, weight: best.weight.value, unit: best.weight.unit });
+        }
+        return { completedSets, totalSets, percent, volumeKg, prsHit };
+    }
+
     // Clear invalid/stale alternate selections from session state
     // If a stored alternateId no longer matches any alternate in the exercise, remove it
     useEffect(() => {
@@ -252,33 +304,36 @@ export default function WorkoutView({
         if (current >= currentExercise.sets) return;
         const next = current + 1;
         setProgressMap((prev) => ({ ...prev, [key]: next }));
-        
+
         // Check if this was the last set of the day
-        const isLastSetOfExercise = next >= currentExercise.sets;
         const allExercisesComplete = exercises.every((ex) => {
             const exKey = `${selectedDayId}__${ex.id}`;
             const completed = ex.id === currentExercise.id ? next : (progressMap[exKey] || 0);
             return completed >= ex.sets;
         });
-        
+
         // Only start rest timer if this is NOT the last set of the last exercise
-        const effectiveRest = restOverride ?? effectiveExercise.rest;
         if (effectiveRest > 0 && !allExercisesComplete) {
             setTimerSeconds(effectiveRest);
             setTimerRunning(true);
+            setTimerSuppressed(false);
         }
-        
-        // Auto-save session when day is complete
+
+        // Auto-save session when day is complete — and never leave the rest
+        // timer pill visible after the final set (BUG-07).
         if (allExercisesComplete && saveSession) {
             console.log('[WorkoutView] All exercises complete. Auto-saving session...');
-            // Stop any running timer
             setTimerRunning(false);
-            // Auto-save session when day is complete
+            setTimerSeconds(0);
+            setShowCompletedTimer(false);
+            setTimerSuppressed(true);
             setTimeout(async () => {
                 try {
                     console.log('[WorkoutView] Auto-saving completed session...');
-                    await saveSessionRef.current();
+                    const historyBefore = historyLogRef.current;
+                    const snapshot = await saveSessionRef.current();
                     console.log('[WorkoutView] ✓ Session auto-saved successfully!');
+                    setSummary(buildSummaryFromSnapshot(snapshot, historyBefore));
                     showToast('🎉 Workout complete! Session saved to history.', 'success');
                 } catch (err) {
                     console.error('[WorkoutView] Failed to auto-save session:', err);
@@ -288,12 +343,36 @@ export default function WorkoutView({
         }
     }
 
-    function resetDayProgress() {
+    function doResetDay() {
         if (!selectedDay) return;
         const updated = { ...progressMap };
         selectedDay.exercises.forEach((ex) => delete updated[`${selectedDay.id}__${ex.id}`]);
         setProgressMap(updated);
         setTimerRunning(false); setTimerSeconds(60);
+        setTimerSuppressed(false);
+        setShowCompletedTimer(false);
+        setSummary(null);
+    }
+
+    // BUG-01: wiping a day with logged sets needs confirmation.
+    function resetDayProgress() {
+        if (dayCompletedSets > 0) {
+            setShowResetConfirm(true);
+            return;
+        }
+        doResetDay();
+    }
+
+    async function finishWorkout() {
+        try {
+            const historyBefore = historyLogRef.current;
+            const snapshot = await saveSessionRef.current();
+            setSummary(buildSummaryFromSnapshot(snapshot, historyBefore));
+            showToast('Workout finished! Session saved to history.', 'success');
+        } catch (err) {
+            console.error('[WorkoutView] Failed to finish workout:', err);
+            showToast('Failed to save session. Please try again.', 'error');
+        }
     }
 
     function goNextDay() { const idx = days.findIndex((d) => d.id === selectedDayId); if (idx < days.length - 1) setSelectedDayId(days[idx + 1].id); setDayPickerOpen(false); }
@@ -422,11 +501,11 @@ export default function WorkoutView({
                 {heroExpanded && (
                     <div className="grid grid-cols-2 gap-3 p-4">
                         <button onClick={goPrevDay} aria-label="Previous workout day"
-                            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500">
+                            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white">
                             <ChevronLeft className="h-4 w-4" aria-hidden="true" />Prev Day
                         </button>
                         <button onClick={goNextDay} aria-label="Next workout day"
-                            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500">
+                            className="flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-white">
                             Next Day<ChevronRight className="h-4 w-4" aria-hidden="true" />
                         </button>
                     </div>
@@ -438,7 +517,7 @@ export default function WorkoutView({
                 <SectionCard className="overflow-hidden">
                     <button onClick={() => setShowWarmUp((v) => !v)} aria-expanded={showWarmUp}
                         className="flex w-full items-center justify-between p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400">
-                        <div className="flex items-center gap-2 text-sm font-black text-white">
+                        <div className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
                             <Zap className="h-4 w-4 text-amber-400" aria-hidden="true" />
                             Warm-Up ({warmUpItems.length} exercises)
                         </div>
@@ -447,11 +526,11 @@ export default function WorkoutView({
                     {showWarmUp && (
                         <div className="space-y-2 px-4 pb-4">
                             {warmUpItems.map((w, i) => (
-                                <div key={i} className="flex items-center justify-between rounded-xl bg-slate-800/60 px-3 py-2.5">
+                                <div key={i} className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2.5 dark:bg-slate-800/60">
                                     <div className="flex items-center gap-2.5 min-w-0">
                                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" aria-hidden="true" />
                                         <div className="min-w-0">
-                                            <div className="text-sm font-semibold text-white truncate">{w.name}</div>
+                                            <div className="text-sm font-semibold text-slate-900 truncate dark:text-white">{w.name}</div>
                                             {w.note && <div className="text-xs text-slate-500 truncate">{w.note}</div>}
                                         </div>
                                     </div>
@@ -471,7 +550,7 @@ export default function WorkoutView({
                             <div className="flex-1 min-w-0">
                                 <div className="text-xs font-bold uppercase tracking-wider text-white/90">Current Exercise</div>
                                 <div className="mt-1 flex items-center gap-2 flex-wrap">
-                                    <div className="text-xl font-black leading-tight">{effectiveExercise.name}</div>
+                                    <div className="text-xl font-black leading-tight break-words line-clamp-3">{effectiveExercise.name}</div>
                                     {effectiveExercise.isAlternate && (
                                         <span className="inline-flex items-center gap-1 rounded-lg border border-cyan-300 bg-cyan-500 px-2 py-0.5 text-xs font-bold text-white">
                                             <Repeat className="h-3 w-3" aria-hidden="true" />
@@ -486,12 +565,29 @@ export default function WorkoutView({
                                         <span className="text-xs font-bold">{activeSessionExercise ? repsDisplay(activeSessionExercise) : effectiveExercise.reps}</span>
                                         <span className="text-[10px] font-medium text-white/70">reps</span>
                                     </div>
-                                    <div className="inline-flex items-center gap-1.5 rounded-lg border border-white/30 bg-black/20 px-2.5 py-1">
+                                    <button type="button" aria-label="Change rest time"
+                                        onClick={() => {
+                                            setTimerSeconds(effectiveRest);
+                                            setTimerRunning(true);
+                                            setTimerSuppressed(false);
+                                            setShowCompletedTimer(true);
+                                        }}
+                                        className="inline-flex items-center gap-1.5 rounded-lg border border-white/30 bg-black/20 px-2.5 py-1 hover:bg-black/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60">
                                         <Timer className="h-3.5 w-3.5" aria-hidden="true" />
-                                        <span className="text-xs font-bold">{restOverride ?? effectiveExercise.rest}s</span>
+                                        <span className="text-xs font-bold">{effectiveRest}s</span>
                                         <span className="text-[10px] font-medium text-white/70">rest{restOverride != null ? " ✎" : ""}</span>
-                                    </div>
+                                    </button>
                                 </div>
+                                {prevPerformance && (
+                                    <div className="mt-2 text-xs font-semibold text-white/90">
+                                        <div>
+                                            Last time: {prevBestWeight ? `${prevBestWeight.value} ${prevBestWeight.unit}` : "—"} × {prevPerformance.completedSets} sets · {new Date(prevPerformance.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                                        </div>
+                                        <div>
+                                            Target: {bestWeight ? `${bestWeight.weight} ${bestWeight.unit}` : `${effectiveExercise.reps} reps`}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="rounded-2xl border border-white/30 bg-black/20 px-3 py-2 text-center shrink-0">
                                 <div className="text-xs font-bold uppercase tracking-wide text-white">Set</div>
@@ -509,11 +605,11 @@ export default function WorkoutView({
                         {(() => {
                             const note = activeSessionExercise?.coachingNote ?? effectiveExercise.note;
                             return note ? (
-                                <div className="flex gap-3 rounded-xl border-l-2 border-amber-500 bg-slate-800/60 px-4 py-3">
+                                <div className="flex gap-3 rounded-xl border-l-2 border-amber-500 bg-amber-50 px-4 py-3 dark:bg-slate-800/60">
                                     <ShieldAlert className="h-4 w-4 shrink-0 text-amber-400 mt-0.5" aria-hidden="true" />
                                     <div>
                                         <div className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-400">Coach's Note</div>
-                                        <p className="text-sm text-slate-200 leading-relaxed">{note}</p>
+                                        <p className="text-sm text-slate-800 leading-relaxed dark:text-slate-200">{note}</p>
                                     </div>
                                 </div>
                             ) : null;
@@ -521,7 +617,7 @@ export default function WorkoutView({
 
                         {/* HOW TO DO THIS — beginner guide */}
                         {effectiveExercise.isAlternate && !effectiveExercise.instructions?.length && !effectiveExercise.formTips?.length && !effectiveExercise.media?.url ? (
-                            <div className="rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm text-slate-400">
+                            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                                 <span className="flex items-center gap-2">
                                     <BookOpen className="h-4 w-4 shrink-0" aria-hidden="true" />
                                     Step-by-step guide not available for this alternate. Switch back to the original for full instructions.
@@ -532,7 +628,7 @@ export default function WorkoutView({
                                 <button
                                     onClick={() => setShowGuideFor(showGuideFor === currentExercise.id ? null : currentExercise.id)}
                                     aria-expanded={showGuideFor === currentExercise.id}
-                                    className="flex w-full items-center justify-between rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-bold text-slate-200 transition hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+                                    className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                                 >
                                     <span className="flex items-center gap-2">
                                         <BookOpen className="h-4 w-4" aria-hidden="true" />
@@ -542,7 +638,7 @@ export default function WorkoutView({
                                 </button>
 
                                 {showGuideFor === currentExercise.id && (
-                                    <div className="mt-2 space-y-3 rounded-2xl border border-slate-700 bg-slate-800/60 p-4">
+                                    <div className="mt-2 space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/60">
 
                                         {/* Step-by-step instructions */}
                                         {effectiveExercise.instructions?.length > 0 && (
@@ -550,7 +646,7 @@ export default function WorkoutView({
                                                 <div className="mb-2 text-xs font-bold uppercase tracking-wide text-blue-400">Step-by-step</div>
                                                 <ol className="space-y-1.5">
                                                     {effectiveExercise.instructions.map((step, i) => (
-                                                        <li key={i} className="flex gap-2 text-sm text-slate-200">
+                                                        <li key={i} className="flex gap-2 text-sm text-slate-800 dark:text-slate-200">
                                                             <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-black text-white">{i + 1}</span>
                                                             <span>{step}</span>
                                                         </li>
@@ -567,7 +663,7 @@ export default function WorkoutView({
                                                 </div>
                                                 <ul className="space-y-1">
                                                     {effectiveExercise.formTips.map((tip, i) => (
-                                                        <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
+                                                        <li key={i} className="flex items-start gap-2 text-sm text-slate-800 dark:text-slate-200">
                                                             <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true" />
                                                             {tip}
                                                         </li>
@@ -673,7 +769,10 @@ export default function WorkoutView({
                             <input id={`weight-${currentExercise.id}`} type="text" inputMode="decimal" placeholder="e.g. 25 lb or 12.5 kg"
                                 value={getWeightValue(weightsMap, selectedDayId, effectiveExercise.id)}
                                 onChange={(e) => updateWeight(currentExercise.id, e.target.value)}
-                                className="w-full rounded-2xl border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-medium text-white outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30" />
+                                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500" />
+                            {weightInvalid && (
+                                <p className="mt-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">Enter a number, e.g. 25 lb</p>
+                            )}
                         </div>
 
                         {/* ACTION BUTTON - Full width Complete Set */}
@@ -694,7 +793,7 @@ export default function WorkoutView({
                 <SectionCard className="overflow-hidden">
                     <button onClick={() => setShowCoolDown((v) => !v)} aria-expanded={showCoolDown}
                         className="flex w-full items-center justify-between p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400">
-                        <div className="flex items-center gap-2 text-sm font-black text-white">
+                        <div className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
                             <Wind className="h-4 w-4 text-cyan-400" aria-hidden="true" />
                             Cool-Down ({coolDownItems.length} stretches)
                         </div>
@@ -703,11 +802,11 @@ export default function WorkoutView({
                     {showCoolDown && (
                         <div className="space-y-2 px-4 pb-4">
                             {coolDownItems.map((c, i) => (
-                                <div key={i} className="flex items-center justify-between rounded-xl bg-slate-800/60 px-3 py-2.5">
+                                <div key={i} className="flex items-center justify-between rounded-xl bg-slate-100 px-3 py-2.5 dark:bg-slate-800/60">
                                     <div className="flex items-center gap-2.5 min-w-0">
                                         <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400" aria-hidden="true" />
                                         <div className="min-w-0">
-                                            <div className="text-sm font-semibold text-white truncate">{c.name}</div>
+                                            <div className="text-sm font-semibold text-slate-900 truncate dark:text-white">{c.name}</div>
                                             {c.note && <div className="text-xs text-slate-500 truncate">{c.note}</div>}
                                         </div>
                                     </div>
@@ -727,7 +826,7 @@ export default function WorkoutView({
                     aria-expanded={roadmapExpanded}
                     className="flex w-full items-center justify-between p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-slate-400"
                 >
-                    <div className="flex items-center gap-2 text-sm font-black text-white">
+                    <div className="flex items-center gap-2 text-sm font-black text-slate-900 dark:text-white">
                         <Dumbbell className="h-4 w-4 text-slate-400" aria-hidden="true" />
                         Workout Roadmap
                     </div>
@@ -742,11 +841,11 @@ export default function WorkoutView({
                 {/* Collapsed summary: current exercise progress */}
                 {!roadmapExpanded && currentExercise && (
                     <div className="px-4 pb-4">
-                        <div className="rounded-2xl border border-blue-500/30 bg-blue-950/40 p-3">
+                        <div className="rounded-2xl border border-blue-500/30 bg-blue-50 p-3 dark:bg-blue-950/40">
                             <div className="mb-2 flex items-center justify-between gap-3">
                                 <div className="min-w-0">
                                     <div className="text-xs font-bold uppercase tracking-wide text-blue-400">Current</div>
-                                    <div className="text-sm font-black text-white truncate">{currentExercise.name}</div>
+                                    <div className="text-sm font-black text-slate-900 truncate break-words dark:text-white">{currentExercise.name}</div>
                                 </div>
                                 <span className="shrink-0 rounded-lg border border-blue-400 px-2 py-0.5 text-xs font-bold text-blue-300">
                                     {currentCompletedSets}/{currentExercise.sets}
@@ -767,18 +866,18 @@ export default function WorkoutView({
                             const isDone = done >= ex.sets;
                             return (
                                 <div key={ex.id} className={cn("rounded-2xl border p-3 transition-all",
-                                    isCurrent ? "border-blue-500/30 bg-blue-950/40"
-                                        : isDone ? "border-emerald-500/30 bg-emerald-950/40"
-                                            : "border-slate-700 bg-slate-800")}>
+                                    isCurrent ? "border-blue-500/30 bg-blue-50 dark:bg-blue-950/40"
+                                        : isDone ? "border-emerald-500/30 bg-emerald-50 dark:bg-emerald-950/40"
+                                            : "border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800")}>
                                     <div className="mb-2 flex items-start justify-between gap-3">
                                         <div className="min-w-0">
-                                            <div className="flex items-center gap-1.5 text-sm font-black text-white">
+                                            <div className="flex items-center gap-1.5 text-sm font-black text-slate-900 break-words dark:text-white">
                                                 {ex.name}
                                                 {(ex.instructions?.length > 0 || ex.media?.url) && (
                                                     <BookOpen className="h-3.5 w-3.5 shrink-0 text-blue-400" aria-label="Guide available" />
                                                 )}
                                             </div>
-                                            <div className="mt-1 text-xs font-medium text-slate-400">{ex.reps} · {ex.rest}s rest</div>
+                                            <div className="mt-1 text-xs font-medium text-slate-400">{ex.reps} · {isCurrent && restOverride != null ? restOverride : ex.rest}s rest{isCurrent && restOverride != null ? " · session" : ""}</div>
                                         </div>
                                         <span className={cn("shrink-0 rounded-lg border px-2 py-0.5 text-xs font-bold",
                                             isDone ? "border-emerald-400 text-emerald-300"
@@ -798,7 +897,7 @@ export default function WorkoutView({
             {/* QUICK ACTIONS */}
             <div className="grid grid-cols-2 gap-3">
                 <button onClick={resetDayProgress}
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-slate-600 bg-slate-800 px-4 py-3 text-sm font-black text-slate-300 hover:border-slate-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500">
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-black text-slate-600 hover:border-slate-400 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-500 dark:hover:text-white">
                     <RefreshCcw className="h-4 w-4" aria-hidden="true" />Reset Day
                 </button>
                 <button onClick={() => setView("plan")}
@@ -806,6 +905,40 @@ export default function WorkoutView({
                     <Settings className="h-4 w-4" aria-hidden="true" />Manage Plan
                 </button>
             </div>
+
+            {/* FINISH WORKOUT — visible while the day is in progress */}
+            {dayCompletedSets > 0 && dayCompletedSets < dayTotalSets && (
+                <button
+                    onClick={finishWorkout}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-blue-500 px-4 py-4 text-sm font-black text-white shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+                    <CheckCircle2 className="h-4 w-4" aria-hidden="true" />Finish Workout
+                </button>
+            )}
+
+            {/* RESET DAY CONFIRMATION (BUG-01) */}
+            {showResetConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="alertdialog" aria-modal="true" aria-label="Reset today's workout?">
+                    <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Reset today's workout?</h2>
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">This deletes today's logged sets.</p>
+                        <div className="mt-6 flex gap-3">
+                            <button
+                                onClick={() => setShowResetConfirm(false)}
+                                autoFocus
+                                className="flex-1 rounded-xl py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => { setShowResetConfirm(false); doResetDay(); }}
+                                className="flex-1 rounded-xl py-2.5 text-sm font-semibold border border-red-300 text-red-600 hover:bg-red-50 transition-colors dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/40"
+                            >
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* MANUAL SAVE SESSION - Only show if there's progress but day not complete */}
             {saveSession && dayCompletedSets > 0 && dayCompletedSets < dayTotalSets && (
@@ -832,7 +965,7 @@ export default function WorkoutView({
                         <AlertTriangle className="h-4 w-4 text-amber-400" aria-hidden="true" />
                     </div>
                     <div>
-                        <div className="mb-1 text-sm font-bold text-white">Safety Reminder</div>
+                        <div className="mb-1 text-sm font-bold text-slate-900 dark:text-white">Safety Reminder</div>
                         <p className="text-xs leading-relaxed text-slate-400">
                             Listen to your body. If any movement causes sharp pain, joint discomfort, or numbness, stop immediately and skip that exercise. Always warm up before training and consult a healthcare professional if you have any existing injuries or medical conditions.
                         </p>
@@ -841,22 +974,22 @@ export default function WorkoutView({
             </SectionCard>
 
             {/* FLOATING REST TIMER - Shows when timer is running or just completed (hides after 3s) */}
-            {(timerRunning || (timerSeconds === 0 && showCompletedTimer) || (timerSeconds > 0 && timerSeconds < 60)) && (
+            {!timerSuppressed && (timerRunning || (timerSeconds === 0 && showCompletedTimer) || (timerSeconds > 0 && timerSeconds < 60)) && (
                 <div className="fixed bottom-20 left-0 right-0 z-40 px-4 pointer-events-none">
                     <div className="mx-auto max-w-md pointer-events-auto">
                         <div className={cn(
                             "rounded-2xl border p-3 shadow-2xl backdrop-blur-sm transition-all duration-300",
                             timerSeconds === 0 && !timerRunning
-                                ? "border-emerald-500 bg-emerald-950/95 animate-pulse"
+                                ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/95 animate-pulse"
                                 : timerSeconds <= 3 && timerRunning
-                                ? "border-amber-500 bg-amber-950/95"
-                                : "border-slate-600 bg-slate-800/95"
+                                ? "border-amber-500 bg-amber-50 dark:bg-amber-950/95"
+                                : "border-slate-300 bg-white/95 dark:border-slate-600 dark:bg-slate-800/95"
                         )}>
                             <div className="flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <Timer className="h-4 w-4 shrink-0 text-slate-400" aria-hidden="true" />
                                     <div className="min-w-0">
-                                        <div className="text-xs font-bold text-slate-200">
+                                        <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
                                             {timerSeconds === 0 && !timerRunning ? "Rest Complete! 🎉" : "Rest Timer"}
                                         </div>
                                         {effectiveExercise && (
@@ -872,7 +1005,7 @@ export default function WorkoutView({
                                         ? "text-emerald-400"
                                         : timerSeconds <= 3 && timerRunning
                                         ? "text-amber-400 text-2xl"
-                                        : "text-white"
+                                        : "text-slate-900 dark:text-white"
                                 )}>{formatTime(timerSeconds)}</div>
                                 <div className="flex gap-1.5 shrink-0">
                                     {/* Play/Pause button */}
@@ -887,7 +1020,7 @@ export default function WorkoutView({
                                     {/* Reset button */}
                                     <button onClick={() => { setTimerRunning(false); setTimerSeconds(restOverride ?? effectiveExercise?.rest ?? 60); }}
                                         aria-label="Reset timer"
-                                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-600 bg-slate-700 text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-95 transition-transform">
+                                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-300 bg-slate-100 text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-95 transition-transform dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200">
                                         <RotateCcw className="h-4 w-4" aria-hidden="true" />
                                     </button>
                                     {/* Close button */}
@@ -898,7 +1031,7 @@ export default function WorkoutView({
                                             setShowCompletedTimer(false);
                                         }}
                                         aria-label="Close timer"
-                                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-600 bg-slate-700 text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-95 transition-transform"
+                                        className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-300 bg-slate-100 text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 active:scale-95 transition-transform dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200"
                                     >
                                         <X className="h-4 w-4" aria-hidden="true" />
                                     </button>
@@ -921,16 +1054,19 @@ export default function WorkoutView({
                                         <button
                                             key={label}
                                             onClick={() => {
+                                                const duration = value ?? effectiveExercise?.rest ?? 60;
                                                 setRestOverride(value);
-                                                setTimerRunning(false);
-                                                setTimerSeconds(value ?? effectiveExercise?.rest ?? 60);
+                                                setTimerSeconds(duration);
+                                                setTimerRunning(true);
+                                                setTimerSuppressed(false);
+                                                setShowCompletedTimer(true);
                                             }}
                                             aria-pressed={isActive}
                                             className={cn(
                                                 "shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400",
                                                 isActive
                                                     ? "bg-blue-600 text-white"
-                                                    : "border border-slate-600 bg-slate-700 text-slate-300 hover:border-blue-500 hover:text-white"
+                                                    : "border border-slate-300 bg-slate-100 text-slate-600 hover:border-blue-500 hover:text-slate-900 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:text-white"
                                             )}
                                         >
                                             {label}
@@ -938,7 +1074,41 @@ export default function WorkoutView({
                                     );
                                 })}
                             </div>
+                            <p className="mt-2 text-[10px] font-medium text-slate-400">Session only — doesn't change your plan.</p>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* WORKOUT SUMMARY (IMP-01 / GAP-10) */}
+            {summary && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" role="dialog" aria-modal="true" aria-label="Workout summary">
+                    <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-700 dark:bg-slate-900">
+                        <h2 className="text-lg font-bold text-slate-900 dark:text-white">Workout Summary</h2>
+                        <div className="mt-4 space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 dark:text-slate-400">Sets completed</span>
+                                <span className="font-black text-slate-900 dark:text-white">{summary.completedSets} / {summary.totalSets} ({summary.percent}%)</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 dark:text-slate-400">Estimated volume</span>
+                                <span className="font-black text-slate-900 dark:text-white">{summary.volumeKg} kg</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-slate-500 dark:text-slate-400">New personal records</span>
+                                <span className="font-black text-slate-900 dark:text-white">
+                                    {summary.prsHit.length > 0
+                                        ? summary.prsHit.map((pr) => `${pr.name}: ${pr.weight} ${pr.unit}`).join(", ")
+                                        : "None this session"}
+                                </span>
+                            </div>
+                        </div>
+                        <button
+                            onClick={() => setSummary(null)}
+                            className="mt-6 w-full rounded-xl py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+                        >
+                            Done
+                        </button>
                     </div>
                 </div>
             )}

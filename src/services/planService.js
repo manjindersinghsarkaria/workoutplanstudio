@@ -43,6 +43,28 @@ export async function saveCompletedSession(session) {
   return db.completedSessions.add(session);
 }
 
+/**
+ * Upserts a CompletedSession: when existingDbId is given, the record with
+ * that numeric Dexie id is replaced (same session, updated progress);
+ * otherwise a new record is appended. Returns the record's id.
+ */
+export async function upsertCompletedSession(session, existingDbId) {
+  if (existingDbId != null) {
+    await db.completedSessions.put({ ...session, id: existingDbId });
+    return existingDbId;
+  }
+  return db.completedSessions.add(session);
+}
+
+/** Replaces all CompletedSession records (used by backup restore). Returns the assigned ids. */
+export async function replaceCompletedSessions(sessions) {
+  await db.completedSessions.clear();
+  if (!sessions || sessions.length === 0) return [];
+  // Strip any client-side string ids so Dexie assigns fresh numeric ids.
+  const rows = sessions.map(({ id, ...rest }) => rest);
+  return db.completedSessions.bulkAdd(rows);
+}
+
 /** Returns all CompletedSession records ordered by savedAt descending (newest first). */
 export async function getCompletedSessions() {
   return db.completedSessions.orderBy("savedAt").reverse().toArray();

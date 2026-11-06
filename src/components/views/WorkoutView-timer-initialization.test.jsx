@@ -211,8 +211,12 @@ describe('WorkoutView - Timer Initialization from Effective Exercise', () => {
     const completeButton = screen.getByRole('button', { name: /^complete set$/i });
     await userEvent.click(completeButton);
 
-    // Should not start timer when workout is complete
-    expect(setTimerSeconds).not.toHaveBeenCalled();
+    // Should not start timer when workout is complete. Deliberate behaviour
+    // change in 1.6.0 (BUG-07): completing the final set stops the timer and
+    // explicitly sets it to 0 so the rest-timer pill is hidden — so
+    // setTimerSeconds IS called, but only with 0, and the timer never runs.
+    expect(setTimerRunning).not.toHaveBeenCalledWith(true);
+    expect(setTimerSeconds).toHaveBeenCalledWith(0);
   });
 
   it('should handle zero rest time gracefully', async () => {

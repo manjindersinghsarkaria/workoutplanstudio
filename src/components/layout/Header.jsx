@@ -56,7 +56,12 @@ export default function Header({ darkMode, setDarkMode, plan, wakeLockEnabled, s
   }
 
   return (
-    <div className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
+    <div className={cn(
+      "sticky top-0 z-40 border-b backdrop-blur-xl",
+      darkMode
+        ? "border-white/10 bg-slate-950/90"
+        : "border-slate-200 bg-white/90"
+    )}>
       <div className="mx-auto flex max-w-md items-center justify-between px-4 py-3 sm:max-w-xl lg:max-w-4xl">
         {/* Logo + plan name — tapping takes user back to home/landing page */}
         <Link to="/" className="flex items-center gap-3 group" aria-label="Go to home page">
@@ -64,8 +69,8 @@ export default function Header({ darkMode, setDarkMode, plan, wakeLockEnabled, s
             <Dumbbell className="h-5 w-5 text-white" aria-hidden="true" />
           </div>
           <div>
-            <div className="text-sm font-black tracking-wide text-white">{plan?.meta?.appName || "Workout Coach"}</div>
-            <div className="text-xs font-medium text-slate-300">
+            <div className={cn("text-sm font-black tracking-wide", darkMode ? "text-white" : "text-slate-900")}>{plan?.meta?.appName || "Workout Coach"}</div>
+            <div className={cn("text-xs font-medium", darkMode ? "text-slate-300" : "text-slate-500")}>
               {plan.planType === "multi_week" ? `Multi-Week · ${plan.totalWeeks} wks` : "Weekly Plan"} · V6
             </div>
           </div>
@@ -79,7 +84,7 @@ export default function Header({ darkMode, setDarkMode, plan, wakeLockEnabled, s
               onClick={handleWhatsNewClick}
               aria-label="What's new"
               aria-expanded={whatsNewOpen}
-              className="relative rounded-2xl border border-white/20 bg-white/10 p-3 text-white transition hover:bg-white/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              className={cn("relative rounded-2xl border p-3 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2", darkMode ? "border-white/20 bg-white/10 text-white hover:bg-white/20 focus-visible:ring-white/60" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 focus-visible:ring-slate-400")}
             >
               <Info className="h-5 w-5" aria-hidden="true" />
               {hasNewVersion && (
@@ -95,21 +100,21 @@ export default function Header({ darkMode, setDarkMode, plan, wakeLockEnabled, s
               onClick={() => setSettingsOpen((v) => !v)}
               aria-label="Open settings"
               aria-expanded={settingsOpen}
-              className="rounded-2xl border border-white/20 bg-white/10 p-3 text-white transition hover:bg-white/20 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              className={cn("rounded-2xl border p-3 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2", darkMode ? "border-white/20 bg-white/10 text-white hover:bg-white/20 focus-visible:ring-white/60" : "border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 focus-visible:ring-slate-400")}
             >
               <Settings className={cn("h-5 w-5 transition-transform duration-300", settingsOpen && "rotate-45")} aria-hidden="true" />
             </button>
 
             {/* Settings panel */}
             {settingsOpen && (
-              <div className="absolute right-0 top-14 w-72 rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl ring-1 ring-black/20">
+              <div className="absolute right-0 top-14 w-72 rounded-3xl border border-slate-200 bg-white shadow-2xl ring-1 ring-black/20 dark:border-slate-700 dark:bg-slate-900">
                 {/* Panel header */}
-                <div className="flex items-center justify-between border-b border-slate-700/60 px-4 py-3">
-                  <span className="text-sm font-black text-white">Settings</span>
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-700/60">
+                  <span className="text-sm font-black text-slate-900 dark:text-white">Settings</span>
                   <button
                     onClick={() => setSettingsOpen(false)}
                     aria-label="Close settings"
-                    className="rounded-xl p-1.5 text-slate-400 transition hover:bg-slate-700 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+                    className="rounded-xl p-1.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -177,15 +182,15 @@ function SettingRow({ icon, label, description, checked, onChange, disabled = fa
         "flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition",
         disabled
           ? "cursor-not-allowed opacity-40"
-          : "cursor-pointer hover:bg-slate-800 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500"
+          : "cursor-pointer hover:bg-slate-100 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 dark:hover:bg-slate-800"
       )}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-700 text-slate-300">
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
         {icon}
       </span>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-bold text-white">{label}</div>
-        <div className="text-xs text-slate-400">{description}</div>
+        <div className="text-sm font-bold text-slate-900 dark:text-white">{label}</div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">{description}</div>
       </div>
       {/* Toggle pill */}
       <div className={cn(

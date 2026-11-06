@@ -3,9 +3,26 @@
  * Update this file when releasing new features or fixes
  */
 
-export const APP_VERSION = "1.5.0";
+export const APP_VERSION = "1.6.0";
 
 export const CHANGELOG = [
+  {
+    version: "1.6.0",
+    date: "2026-11-05",
+    title: "Audit Fixes: Safer Resets, Smarter Rest, Backup & Finish Summary",
+    changes: [
+      "🛡️ Reset Day now asks for confirmation before wiping logged sets",
+      "⏱️ Rest presets are session-only — they no longer change your plan or survive a reload — and always start a fresh countdown, even when paused",
+      "🎉 No more rest timer popping up after your final set",
+      "📜 Saving a partial session updates the same history entry instead of creating duplicates",
+      "☀️ Light theme now applies to the header, cards, settings, and workout views",
+      "📊 See your last session and target weight for each exercise while you train",
+      "💾 Export all data (JSON) and history (CSV), and import a backup — all on your device, no account needed",
+      "🏁 Finish Workout button with a session summary: sets, estimated volume, and new PRs",
+      "✏️ Weight field warns you when the value isn't a number; the rest ✎ now opens the timer",
+      "🔤 Plan options show human labels (Single week, Build muscle) while saved plans keep working",
+    ],
+  },
   {
     version: "1.5.0",
     date: "2026-06-17",

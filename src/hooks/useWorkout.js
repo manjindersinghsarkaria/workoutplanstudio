@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { normalizePlan, getCompletedSets, getWeightValue, parseWeightEntry } from "@/helpers";
 import { DEFAULT_PLAN } from "@/constants";
 import { flattenExercises } from "@/utils/workoutDerived";
-import { getPlan, savePlan, updatePlan, deletePlan, saveCompletedSession, getCompletedSessions } from "@/services/planService";
+import { getSessionUpsertKey, shouldReusePrevious } from "@/utils/sessionUpsert";
+import { getPlan, savePlan, updatePlan, deletePlan, saveCompletedSession, getCompletedSessions, upsertCompletedSession, replaceCompletedSessions } from "@/services/planService";
 
 // Valid NavTab values — used for validation in switchTab guard
 const VALID_TABS = ["workout", "plan", "history"];
@@ -39,6 +40,10 @@ export const useWorkout = () => {
   const [selectedAlternates, setSelectedAlternates] = useState({});
   const [historyLog, setHistoryLog] = useState([]);
 
+  // In-progress session saves, keyed by plan|day|date (see sessionUpsert.js).
+  // Value: { dbId, snapshotId, savedAt, completionPercent, planName, dayLabel }
+  const savedSessionRef = useRef(new Map());
+
   const [view, setView] = useState("workout");
   /* ── WorkoutSession state ── */
   const [session, setSession] = useState(null);
@@ -47,21 +52,10 @@ export const useWorkout = () => {
   const [timerSeconds, setTimerSeconds] = useState(60);
   const [timerRunning, setTimerRunning] = useState(false);
 
-  /* ── Rest timer override — null means "use plan default" ── */
-  const [restOverride, setRestOverride] = useState(() => {
-    const s = localStorage.getItem("mgc_rest_override");
-    if (!s) return null;
-    const n = Number(s);
-    return Number.isFinite(n) && n > 0 ? n : null;
-  });
-
-  useEffect(() => {
-    if (restOverride === null) {
-      localStorage.removeItem("mgc_rest_override");
-    } else {
-      localStorage.setItem("mgc_rest_override", String(restOverride));
-    }
-  }, [restOverride]);
+  /* ── Rest timer override — session-only, never persisted.
+   * null means "use plan default". Tapping a rest preset changes this
+   * session only; it does not change the plan and does not survive a reload. */
+  const [restOverride, setRestOverride] = useState(null);
 
   /* ── Persist darkMode to localStorage ── */
   useEffect(() => {
@@ -96,6 +90,22 @@ export const useWorkout = () => {
         }
         if (sessions.length > 0) {
           setHistoryLog(sessions);
+          // Remember the latest partial save per plan|day|date so a later
+          // save in this browser session updates it instead of duplicating it.
+          for (const s of sessions) {
+            const key = getSessionUpsertKey(s);
+            const existing = savedSessionRef.current.get(key);
+            if (!existing || new Date(s.savedAt) > new Date(existing.savedAt)) {
+              savedSessionRef.current.set(key, {
+                dbId: typeof s.id === "number" ? s.id : null,
+                snapshotId: s.id,
+                savedAt: s.savedAt,
+                completionPercent: s.completionPercent,
+                planName: s.planName,
+                dayLabel: s.dayLabel,
+              });
+            }
+          }
         }
         setIsHydrating(false);
       })
@@ -116,6 +126,7 @@ export const useWorkout = () => {
     setSelectedAlternates({});
     setProgressMap({});
     setWeightsMap({});
+    setRestOverride(null);
     updatePlan(normalized, promptOptions ?? {}).catch((err) => {
       setDbError(err?.message ?? "Failed to save plan");
     });
@@ -131,6 +142,7 @@ export const useWorkout = () => {
     setSelectedAlternates({});
     setProgressMap({});
     setWeightsMap({});
+    setRestOverride(null);
   }
 
   function handleSetProgressMap(newProgress) {
@@ -236,16 +248,89 @@ export const useWorkout = () => {
   }
 
   /**
-   * Snapshots the active session and appends it to the in-memory history log.
-   * @returns {import("../types/workout").CompletedSession}
+   * Snapshots the active session and upserts it into history: a partial
+   * save for the same plan + day + date updates the earlier record (same
+   * Dexie id, new updatedAt) instead of appending a duplicate. A save after
+   * a 100% save, or for a different day/date, creates a new record.
+   * @returns {Promise<import("../types/workout").CompletedSession>}
    */
-  function handleSaveSession() {
+  async function handleSaveSession() {
     const snapshot = saveSession();
-    setHistoryLog(prev => [...prev, snapshot]);
-    saveCompletedSession(snapshot).catch((err) => {
+    const key = getSessionUpsertKey(snapshot);
+    const prev = savedSessionRef.current.get(key);
+    try {
+      if (shouldReusePrevious(prev, snapshot)) {
+        const updated = {
+          ...snapshot,
+          id: prev.snapshotId,
+          savedAt: prev.savedAt,
+          updatedAt: new Date().toISOString(),
+        };
+        const dbId = await upsertCompletedSession(updated, prev.dbId);
+        savedSessionRef.current.set(key, {
+          dbId,
+          snapshotId: updated.id,
+          savedAt: updated.savedAt,
+          completionPercent: updated.completionPercent,
+          planName: updated.planName,
+          dayLabel: updated.dayLabel,
+        });
+        setHistoryLog((prevLog) =>
+          prevLog.map((s) => (s.id === updated.id ? updated : s))
+        );
+        return updated;
+      }
+      const dbId = await saveCompletedSession(snapshot);
+      savedSessionRef.current.set(key, {
+        dbId,
+        snapshotId: snapshot.id,
+        savedAt: snapshot.savedAt,
+        completionPercent: snapshot.completionPercent,
+        planName: snapshot.planName,
+        dayLabel: snapshot.dayLabel,
+      });
+      setHistoryLog((prevLog) => [...prevLog, snapshot]);
+      return snapshot;
+    } catch (err) {
       setDbError(err?.message ?? "Failed to save session");
+      throw err;
+    }
+  }
+
+  /**
+   * Restores a validated backup (GAP-02): applies the backed-up plan and
+   * replaces the session history with the backed-up sessions. Local only —
+   * nothing is uploaded anywhere.
+   */
+  async function restoreBackup(backup) {
+    const normalized = normalizePlan(backup.plan);
+    setPlan(normalized);
+    setSelectedDayId(normalized.days?.[0]?.id ?? "day1");
+    setSelectedAlternates({});
+    setProgressMap({});
+    setWeightsMap({});
+    setRestOverride(null);
+    await updatePlan(normalized, {}).catch((err) => {
+      setDbError(err?.message ?? "Failed to save plan");
     });
-    return snapshot;
+    const sessions = Array.isArray(backup.sessions) ? backup.sessions : [];
+    const dbIds = await replaceCompletedSessions(sessions);
+    savedSessionRef.current = new Map();
+    sessions.forEach((s, idx) => {
+      const key = getSessionUpsertKey(s);
+      const existing = savedSessionRef.current.get(key);
+      if (!existing || new Date(s.savedAt) > new Date(existing.savedAt)) {
+        savedSessionRef.current.set(key, {
+          dbId: dbIds[idx] ?? null,
+          snapshotId: s.id,
+          savedAt: s.savedAt,
+          completionPercent: s.completionPercent,
+          planName: s.planName,
+          dayLabel: s.dayLabel,
+        });
+      }
+    });
+    setHistoryLog(sessions);
   }
 
   /**
@@ -273,6 +358,7 @@ export const useWorkout = () => {
     session, setSession,
     saveSession,
     handleSaveSession,
+    restoreBackup,
     switchTab,
     timerSeconds, setTimerSeconds,
     timerRunning, setTimerRunning,

@@ -1,5 +1,8 @@
 import { DEFAULT_PLAN, THEME_PRESETS } from "@/constants";
 
+/** Exercise names longer than this are rejected on apply and clamped on import. */
+export const MAX_EXERCISE_NAME_LENGTH = 100;
+
 export function normalizeDayTheme(day, idx) {
     if (day.theme) return day.theme;
     return THEME_PRESETS[idx % THEME_PRESETS.length];
@@ -175,6 +178,24 @@ export function validatePlanShape(raw) {
   const structureError = diagnosePlanStructure(parsed);
   if (structureError) throw new Error(structureError);
 
+  // Exercise names must fit the workout card — reject overly long ones,
+  // naming the offending exercise so the user can fix it.
+  const daysForNames =
+    Array.isArray(parsed.days)
+      ? parsed.days
+      : Array.isArray(parsed.weeks)
+      ? parsed.weeks.flatMap((w) => w.days || [])
+      : [];
+  for (const day of daysForNames) {
+    for (const ex of day.exercises || []) {
+      if (typeof ex?.name === "string" && ex.name.length > MAX_EXERCISE_NAME_LENGTH) {
+        throw new Error(
+          `Exercise name is too long (${ex.name.length} characters, max ${MAX_EXERCISE_NAME_LENGTH}): "${ex.name.slice(0, 60)}…" — shorten the name and try again.`
+        );
+      }
+    }
+  }
+
   return parsed;
 }
 
@@ -229,12 +250,19 @@ export function normalizePlan(input) {
       warmUp: warmUp.map((w) => ({ name: w.name || "", duration: w.duration || "", note: w.note || "" })),
       exercises: exercises.map((ex, exIdx) => ({
         id: ex.id || `${baseId}e${exIdx + 1}`,
-        name: ex.name || `Exercise ${exIdx + 1}`,
+        // Defensively clamp: shared-plan links bypass validatePlanShape,
+        // so a long legacy name must never reach the UI unclamped.
+        name: String(ex.name || `Exercise ${exIdx + 1}`).slice(0, MAX_EXERCISE_NAME_LENGTH),
         sets: Number(ex.sets) > 0 ? Number(ex.sets) : 3,
         reps: ex.reps || "10-12",
         rest: Number(ex.rest) >= 0 ? Number(ex.rest) : 60,
         note: ex.note || "",
-        alternates: Array.isArray(ex.alternates) ? ex.alternates : [],
+        alternates: Array.isArray(ex.alternates)
+          ? ex.alternates.map((alt) => ({
+              ...alt,
+              name: typeof alt?.name === "string" ? alt.name.slice(0, MAX_EXERCISE_NAME_LENGTH) : alt?.name,
+            }))
+          : [],
         // Beginner-support fields (optional, backward-compatible)
         instructions: Array.isArray(ex.instructions) ? ex.instructions : [],
         formTips: Array.isArray(ex.formTips) ? ex.formTips : [],

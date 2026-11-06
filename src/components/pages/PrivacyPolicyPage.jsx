@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
 
         <Section title="Overview">
           <p>
-            WorkoutPlanStudio ("we", "our", or "us") operates the website at workoutplanstudio.com (the "Service"). This page explains what information we collect, how we use it, and your rights regarding that information.
+            WorkoutPlanStudio ("we", "our", or "us") operates the website at workoutplanstudio.ca (the "Service"). This page explains what information we collect, how we use it, and your rights regarding that information.
           </p>
           <p>
             We are committed to protecting your privacy. This policy is written in plain language so you can understand exactly what happens with your data.

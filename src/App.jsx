@@ -52,6 +52,7 @@ export default function App() {
     setRestOverride,
     onApplyPlan,
     onResetPlan,
+    restoreBackup,
     isHydrating,
     dbError,
     loadedPromptOptions,
@@ -171,13 +172,16 @@ export default function App() {
             setTimerRunning={setTimerRunning}
             restOverride={restOverride}
             setRestOverride={setRestOverride}
+            historyLog={historyLog}
           />
         )}
         {view === "plan" && (
           <PlanView
             plan={plan}
+            historyLog={historyLog}
             onApplyPlan={onApplyPlan}
             onResetPlan={onResetPlan}
+            restoreBackup={restoreBackup}
             setSelectedDayId={setSelectedDayId}
             setView={switchTab}
             initialPromptOptions={loadedPromptOptions}

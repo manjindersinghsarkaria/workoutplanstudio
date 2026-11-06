@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { History, ChevronLeft, Trophy } from "lucide-react";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { calcPersonalRecords } from "@/utils/workoutDerived";
+import { sessionsToCsv } from "@/utils/backup";
 
 /**
  * Format an ISO 8601 timestamp or Firestore Timestamp into a human-readable date string.
@@ -289,6 +290,26 @@ export default function HistoryView({ completedSessions = [], setView }) {
 
       {/* Personal Records — derived from all-time history */}
       <PersonalRecords completedSessions={completedSessions} />
+
+      {/* Export history as CSV — local file, no upload */}
+      {completedSessions.length > 0 && (
+        <SectionCard className="p-4">
+          <button
+            onClick={() => {
+              const blob = new Blob([sessionsToCsv(completedSessions)], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = "workoutplanstudio-history.csv";
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-500 px-4 py-2.5 text-sm font-black text-white shadow hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+          >
+            Export history (CSV)
+          </button>
+        </SectionCard>
+      )}
 
       {/* Session list — last 2 weeks only */}
       <HistoryList
