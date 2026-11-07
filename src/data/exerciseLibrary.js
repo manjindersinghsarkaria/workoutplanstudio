@@ -856,6 +856,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep your chest tall — don't let the weights pull you forward.", "Slow down, faster up."],
     mediaUrl: yt("Dumbbell Squat"),
+    mediaWebp: "/exercises/dumbbell-squat.webp",
     alternates: [
       { name: "Goblet Squat", note: "Weight held at your chest — easier to stay upright." },
       { name: "Leg Press", note: "Machine alternative." },
@@ -872,6 +873,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Knees track over your toes — don't let them cave inward.", "Keep the dumbbell close to your body throughout."],
     mediaUrl: yt("Dumbbell Sumo Squat"),
+    mediaWebp: "/exercises/sumo-squat.webp",
     alternates: [
       { name: "Goblet Squat", note: "Narrower stance, same front-loaded hold." },
       { name: "Dumbbell Squat", note: "Standard-stance version." },
@@ -888,6 +890,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Use the chair for balance only — don't pull yourself up with it.", "Keep your front knee over your ankle, not past your toes."],
     mediaUrl: yt("Supported Split Squat"),
+    mediaWebp: "/exercises/split-squat.webp",
     alternates: [
       { name: "Bulgarian Split Squat", note: "Rear foot elevated — harder, no chair needed." },
       { name: "Dumbbell Reverse Lunge", note: "Dynamic version of the same pattern." },
@@ -937,6 +940,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Don't lean or sway — keep the weights hanging at your sides.", "Breathe steadily and brace your core on every step."],
     mediaUrl: yt("Dumbbell Farmer March"),
+    mediaWebp: "/exercises/farmer-march.webp",
     alternates: [
       { name: "Farmer Carry", note: "Walk forward instead of marching in place." },
       { name: "Fast Marching in Place", note: "Bodyweight version, no dumbbells." },
@@ -986,6 +990,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Brace your core — don't lean back as the knee comes up.", "Drive the knee up; don't just lift the foot."],
     mediaUrl: yt("Standing Knee Drive exercise"),
+    mediaWebp: "/exercises/knee-drive.webp",
     alternates: [
       { name: "Fast Marching in Place", note: "Faster, continuous marching." },
       { name: "Dumbbell Farmer March", note: "Loaded marching version." },

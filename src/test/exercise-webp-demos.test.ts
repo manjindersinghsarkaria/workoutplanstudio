@@ -93,3 +93,90 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
     expect(enriched.days[0].exercises[0].media?.url).toContain("youtube.com");
   });
 });
+
+const WEBP_BY_EXERCISE_BATCH2: Record<string, string> = {
+  "Dumbbell Sumo Squat": "/exercises/sumo-squat.webp",
+  "Dumbbell Farmer March": "/exercises/farmer-march.webp",
+  "Supported Split Squat": "/exercises/split-squat.webp",
+  "Dumbbell Squat": "/exercises/dumbbell-squat.webp",
+  "Standing Knee Drive": "/exercises/knee-drive.webp",
+};
+
+describe("animated webP exercise demos (HIIT Days 2–3, batch 1)", () => {
+  it("each batch-2 exercise has a mediaWebp entry pointing at a real file", () => {
+    for (const [name, url] of Object.entries(WEBP_BY_EXERCISE_BATCH2)) {
+      const entry = findExercise(name);
+      expect(entry, `${name} resolves in the library`).toBeTruthy();
+      expect(entry.mediaWebp).toBe(url);
+      const file = path.join(process.cwd(), "public", url);
+      expect(existsSync(file), `${url} exists`).toBe(true);
+      expect(statSync(file).size).toBeGreaterThan(0);
+    }
+  });
+
+  it("enrichPlan gives Day-2 exercises webP media except the rejected step touch", () => {
+    const enriched = enrichPlan(normalizePlan(SAMPLE));
+    const day2 = enriched.days[1].exercises;
+    expect(day2).toHaveLength(6);
+    const expected: Record<string, string> = {
+      "Dumbbell Sumo Squat": "/exercises/sumo-squat.webp",
+      "Dumbbell Farmer March": "/exercises/farmer-march.webp",
+      "Supported Split Squat": "/exercises/split-squat.webp",
+      "Dumbbell Bent-Over Row": "/exercises/bent-over-row.webp",
+      "Dumbbell Floor Press": "/exercises/floor-press.webp",
+    };
+    for (const ex of day2) {
+      if (ex.name === "Side-to-Side Step Touch") {
+        // Clip rejected on frame check (showed a squat, not a lateral step);
+        // stays on the YouTube fallback.
+        expect(ex.media?.type).toBe("youtube");
+      } else {
+        expect(ex.media?.type).toBe("webp");
+        expect(ex.media?.url).toBe(expected[ex.name]);
+      }
+    }
+  });
+
+  it("enrichPlan gives Day-3 exercises webP media except the two per-side moves", () => {
+    const enriched = enrichPlan(normalizePlan(SAMPLE));
+    const day3 = enriched.days[2].exercises;
+    expect(day3).toHaveLength(6);
+    const expected: Record<string, string> = {
+      "Dumbbell Squat": "/exercises/dumbbell-squat.webp",
+      "Dumbbell Romanian Deadlift": "/exercises/romanian-deadlift.webp",
+      "Dumbbell Floor Press": "/exercises/floor-press.webp",
+      "Standing Knee Drive": "/exercises/knee-drive.webp",
+    };
+    for (const ex of day3) {
+      if (
+        ex.name === "Supported One-Arm Row" ||
+        ex.name === "Dumbbell Suitcase March"
+      ) {
+        expect(ex.media?.type).toBe("youtube");
+      } else {
+        expect(ex.media?.type).toBe("webp");
+        expect(ex.media?.url).toBe(expected[ex.name]);
+      }
+    }
+  });
+
+  it("the same exercise reuses the same webP on every day it appears", () => {
+    const enriched = enrichPlan(normalizePlan(SAMPLE));
+    const day1Row = enriched.days[0].exercises.find(
+      (ex) => ex.name === "Dumbbell Bent-Over Row"
+    );
+    const day2Row = enriched.days[1].exercises.find(
+      (ex) => ex.name === "Dumbbell Bent-Over Row"
+    );
+    expect(day1Row?.media?.url).toBe("/exercises/bent-over-row.webp");
+    expect(day2Row?.media?.url).toBe("/exercises/bent-over-row.webp");
+    const day1Press = enriched.days[0].exercises.find(
+      (ex) => ex.name === "Dumbbell Floor Press"
+    );
+    const day3Press = enriched.days[2].exercises.find(
+      (ex) => ex.name === "Dumbbell Floor Press"
+    );
+    expect(day1Press?.media?.url).toBe("/exercises/floor-press.webp");
+    expect(day3Press?.media?.url).toBe("/exercises/floor-press.webp");
+  });
+});
