@@ -114,7 +114,7 @@ describe("animated webP exercise demos (HIIT Days 2–3, batch 1)", () => {
     }
   });
 
-  it("enrichPlan gives Day-2 exercises webP media except the rejected step touch", () => {
+  it("enrichPlan gives every Day-2 exercise webP media", () => {
     const enriched = enrichPlan(normalizePlan(SAMPLE));
     const day2 = enriched.days[1].exercises;
     expect(day2).toHaveLength(6);
@@ -124,20 +124,15 @@ describe("animated webP exercise demos (HIIT Days 2–3, batch 1)", () => {
       "Supported Split Squat": "/exercises/split-squat.webp",
       "Dumbbell Bent-Over Row": "/exercises/bent-over-row.webp",
       "Dumbbell Floor Press": "/exercises/floor-press.webp",
+      "Side-to-Side Step Touch": "/exercises/step-touch.webp",
     };
     for (const ex of day2) {
-      if (ex.name === "Side-to-Side Step Touch") {
-        // Clip rejected on frame check (showed a squat, not a lateral step);
-        // stays on the YouTube fallback.
-        expect(ex.media?.type).toBe("youtube");
-      } else {
-        expect(ex.media?.type).toBe("webp");
-        expect(ex.media?.url).toBe(expected[ex.name]);
-      }
+      expect(ex.media?.type).toBe("webp");
+      expect(ex.media?.url).toBe(expected[ex.name]);
     }
   });
 
-  it("enrichPlan gives Day-3 exercises webP media except the two per-side moves", () => {
+  it("enrichPlan gives every Day-3 exercise webP media", () => {
     const enriched = enrichPlan(normalizePlan(SAMPLE));
     const day3 = enriched.days[2].exercises;
     expect(day3).toHaveLength(6);
@@ -145,18 +140,13 @@ describe("animated webP exercise demos (HIIT Days 2–3, batch 1)", () => {
       "Dumbbell Squat": "/exercises/dumbbell-squat.webp",
       "Dumbbell Romanian Deadlift": "/exercises/romanian-deadlift.webp",
       "Dumbbell Floor Press": "/exercises/floor-press.webp",
+      "Supported One-Arm Row": "/exercises/one-arm-row.webp",
+      "Dumbbell Suitcase March": "/exercises/suitcase-march.webp",
       "Standing Knee Drive": "/exercises/knee-drive.webp",
     };
     for (const ex of day3) {
-      if (
-        ex.name === "Supported One-Arm Row" ||
-        ex.name === "Dumbbell Suitcase March"
-      ) {
-        expect(ex.media?.type).toBe("youtube");
-      } else {
-        expect(ex.media?.type).toBe("webp");
-        expect(ex.media?.url).toBe(expected[ex.name]);
-      }
+      expect(ex.media?.type).toBe("webp");
+      expect(ex.media?.url).toBe(expected[ex.name]);
     }
   });
 
@@ -178,5 +168,42 @@ describe("animated webP exercise demos (HIIT Days 2–3, batch 1)", () => {
     );
     expect(day1Press?.media?.url).toBe("/exercises/floor-press.webp");
     expect(day3Press?.media?.url).toBe("/exercises/floor-press.webp");
+  });
+});
+
+const WEBP_BY_EXERCISE_FINAL: Record<string, string> = {
+  "Side-to-Side Step Touch": "/exercises/step-touch.webp",
+  "Supported One-Arm Row": "/exercises/one-arm-row.webp",
+  "Dumbbell Suitcase March": "/exercises/suitcase-march.webp",
+};
+
+describe("animated webP exercise demos (HIIT complete)", () => {
+  it("each remaining exercise has a mediaWebp entry pointing at a real file", () => {
+    for (const [name, url] of Object.entries(WEBP_BY_EXERCISE_FINAL)) {
+      const entry = findExercise(name);
+      expect(entry, `${name} resolves in the library`).toBeTruthy();
+      expect(entry.mediaWebp).toBe(url);
+      const file = path.join(process.cwd(), "public", url);
+      expect(existsSync(file), `${url} exists`).toBe(true);
+      expect(statSync(file).size).toBeGreaterThan(0);
+    }
+  });
+
+  it("all 14 distinct HIIT moves carry webP media across the 3 days", () => {
+    const enriched = enrichPlan(normalizePlan(SAMPLE));
+    const seen = new Map<string, string>();
+    for (const day of enriched.days) {
+      expect(day.exercises).toHaveLength(6);
+      for (const ex of day.exercises) {
+        expect(ex.media?.type, `${ex.name} has webP media`).toBe("webp");
+        expect(ex.media?.url).toMatch(/^\/exercises\/[\w-]+\.webp$/);
+        if (seen.has(ex.name)) {
+          expect(ex.media?.url).toBe(seen.get(ex.name));
+        } else {
+          seen.set(ex.name, ex.media.url);
+        }
+      }
+    }
+    expect(seen.size).toBe(14);
   });
 });

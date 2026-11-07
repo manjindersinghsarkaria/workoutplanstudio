@@ -924,6 +924,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep your hips level — don't rotate as you pull.", "Pull your elbow past your torso for a full contraction."],
     mediaUrl: yt("One Arm Dumbbell Row"),
+    mediaWebp: "/exercises/one-arm-row.webp",
     alternates: [
       { name: "Dumbbell Row", note: "Same movement braced on a bench." },
       { name: "Dumbbell Bent-Over Row", note: "Both arms together." },
@@ -957,6 +958,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Stay straight — resist the urge to lean away from the loaded side.", "Brace your core hard to keep from tipping sideways."],
     mediaUrl: yt("Dumbbell Suitcase March"),
+    mediaWebp: "/exercises/suitcase-march.webp",
     alternates: [
       { name: "Dumbbell Farmer March", note: "Both hands loaded — balanced version." },
       { name: "Farmer Carry", note: "Walking version with a one-sided load." },
@@ -1007,6 +1009,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Stay light on your feet — don't stomp.", "Keep your knees soft; never lock them."],
     mediaUrl: yt("Side to Side Step Touch exercise"),
+    mediaWebp: "/exercises/step-touch.webp",
     alternates: [
       { name: "Fast Marching in Place", note: "Forward marching cardio." },
       { name: "Standing Knee Drive", note: "Stationary cardio alternative." },
