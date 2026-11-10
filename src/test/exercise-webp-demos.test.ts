@@ -73,7 +73,7 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
   });
 
   it("exercises without a webP still fall back to YouTube", () => {
-    const entry = findExercise("Barbell Bench Press");
+    const entry = findExercise("Deadlift");
     expect(entry.mediaWebp).toBeUndefined();
     const enriched = enrichPlan(
       normalizePlan({
@@ -83,7 +83,7 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
           {
             label: "Day 1",
             exercises: [
-              { name: "Barbell Bench Press", sets: 3, reps: "10", rest: 60 },
+              { name: "Deadlift", sets: 3, reps: "5", rest: 180 },
             ],
           },
         ],
@@ -176,7 +176,6 @@ const WEBP_BY_EXERCISE_FINAL: Record<string, string> = {
   "Supported One-Arm Row": "/exercises/one-arm-row.webp",
   "Dumbbell Suitcase March": "/exercises/suitcase-march.webp",
 };
-
 describe("animated webP exercise demos (HIIT complete)", () => {
   it("each remaining exercise has a mediaWebp entry pointing at a real file", () => {
     for (const [name, url] of Object.entries(WEBP_BY_EXERCISE_FINAL)) {
@@ -205,5 +204,53 @@ describe("animated webP exercise demos (HIIT complete)", () => {
       }
     }
     expect(seen.size).toBe(14);
+  });
+});
+
+const WEBP_BY_EXERCISE_PLAN_BATCH1: Record<string, string> = {
+  "Barbell Back Squat": "/exercises/back-squat.webp",
+  "Overhead Press": "/exercises/overhead-press.webp",
+  "Barbell Bench Press": "/exercises/bench-press.webp",
+  "Leg Press": "/exercises/leg-press.webp",
+  "Lateral Raise": "/exercises/lateral-raise.webp",
+  "Leg Curl": "/exercises/leg-curl.webp",
+};
+
+describe("animated webP exercise demos (most-used plan exercises, batch 1)", () => {
+  it("each batch-1 exercise has a mediaWebp entry pointing at a real file", () => {
+    for (const [name, url] of Object.entries(WEBP_BY_EXERCISE_PLAN_BATCH1)) {
+      const entry = findExercise(name);
+      expect(entry, `${name} resolves in the library`).toBeTruthy();
+      expect(entry.mediaWebp).toBe(url);
+      const file = path.join(process.cwd(), "public", url);
+      expect(existsSync(file), `${url} exists`).toBe(true);
+      expect(statSync(file).size).toBeGreaterThan(0);
+    }
+  });
+
+  it("enrichPlan gives the batch-1 exercises webP media via the normal apply flow", () => {
+    const enriched = enrichPlan(
+      normalizePlan({
+        meta: {},
+        planType: "single_week",
+        days: [
+          {
+            label: "Push A",
+            exercises: [
+              { name: "Barbell Bench Press", sets: 4, reps: "5–7", rest: 180 },
+              { name: "Overhead Press", sets: 3, reps: "8–10", rest: 90 },
+              { name: "Barbell Back Squat", sets: 4, reps: "5–7", rest: 180 },
+              { name: "Leg Press", sets: 3, reps: "10–12", rest: 90 },
+              { name: "Lateral Raise", sets: 4, reps: "15–20", rest: 45 },
+              { name: "Leg Curl", sets: 3, reps: "12–15", rest: 60 },
+            ],
+          },
+        ],
+      })
+    );
+    for (const ex of enriched.days[0].exercises) {
+      expect(ex.media?.type, `${ex.name} has webP media`).toBe("webp");
+      expect(ex.media?.url).toBe(WEBP_BY_EXERCISE_PLAN_BATCH1[ex.name]);
+    }
   });
 });

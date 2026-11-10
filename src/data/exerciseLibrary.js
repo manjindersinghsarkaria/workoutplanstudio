@@ -31,6 +31,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Tuck elbows to about 45° — don't let them flare straight out.", "Control the descent — 2 seconds down, explosive up."],
     mediaUrl: yt("Barbell Bench Press"),
+    mediaWebp: "/exercises/bench-press.webp",
     alternates: [
       { name: "Dumbbell Bench Press", note: "More natural wrist path and greater range of motion." },
       { name: "Machine Chest Press", note: "Easier to learn — good for beginners or shoulder issues." },
@@ -318,6 +319,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Squeeze your glutes and brace your abs — don't hyperextend your lower back.", "Keep the bar path vertical — don't press in front of your face."],
     mediaUrl: yt("Barbell Overhead Press"),
+    mediaWebp: "/exercises/overhead-press.webp",
     alternates: [
       { name: "Dumbbell Shoulder Press", note: "Seated or standing — more natural wrist path." },
       { name: "Machine Shoulder Press", note: "Fixed path — good for beginners." },
@@ -348,6 +350,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Lead with your elbows, not your wrists — imagine pouring a jug.", "Don't shrug your shoulders as you raise — keep them depressed."],
     mediaUrl: yt("Dumbbell Lateral Raise"),
+    mediaWebp: "/exercises/lateral-raise.webp",
     alternates: [
       { name: "Cable Lateral Raise", note: "Constant tension throughout the range — often more effective." },
       { name: "Machine Lateral Raise", note: "Guided path — easier to isolate." },
@@ -552,6 +555,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Break parallel — your hip crease should go below your knee at the bottom.", "Knees out — push them in the direction your toes point."],
     mediaUrl: yt("Barbell Back Squat"),
+    mediaWebp: "/exercises/back-squat.webp",
     alternates: [
       { name: "Goblet Squat", note: "Easier to learn, great for beginners." },
       { name: "Leg Press", note: "Machine alternative — less spinal loading." },
@@ -600,6 +604,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Don't let your lower back peel off the seat — stop before that happens.", "Foot placement changes emphasis: higher = more glutes/hams, lower = more quads."],
     mediaUrl: yt("Leg Press machine"),
+    mediaWebp: "/exercises/leg-press.webp",
     alternates: [
       { name: "Barbell Back Squat", note: "More full-body demand, free weight." },
       { name: "Hack Squat", note: "Similar movement in a machine." },
@@ -645,6 +650,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Don't let your hips rise off the pad to complete the rep — that's a cheating rep.", "Slow eccentric — 3 seconds down — maximises hamstring stimulus."],
     mediaUrl: yt("Leg Curl hamstring"),
+    mediaWebp: "/exercises/leg-curl.webp",
     alternates: [
       { name: "Romanian Deadlift", note: "Hip hinge that also targets hamstrings through a different mechanism." },
       { name: "Nordic Hamstring Curl", note: "Challenging bodyweight eccentric — very effective." },
