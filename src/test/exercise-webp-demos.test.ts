@@ -73,7 +73,7 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
   });
 
   it("exercises without a webP still fall back to YouTube", () => {
-    const entry = findExercise("Deadlift");
+    const entry = findExercise("Barbell Row");
     expect(entry.mediaWebp).toBeUndefined();
     const enriched = enrichPlan(
       normalizePlan({
@@ -83,7 +83,7 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
           {
             label: "Day 1",
             exercises: [
-              { name: "Deadlift", sets: 3, reps: "5", rest: 180 },
+              { name: "Barbell Row", sets: 3, reps: "8–10", rest: 120 },
             ],
           },
         ],
@@ -252,5 +252,78 @@ describe("animated webP exercise demos (most-used plan exercises, batch 1)", () 
       expect(ex.media?.type, `${ex.name} has webP media`).toBe("webp");
       expect(ex.media?.url).toBe(WEBP_BY_EXERCISE_PLAN_BATCH1[ex.name]);
     }
+  });
+});
+
+const WEBP_BY_EXERCISE_PLAN_BATCH2: Record<string, string> = {
+  "Deadlift": "/exercises/deadlift.webp",
+  "Lat Pulldown": "/exercises/lat-pulldown.webp",
+  "Seated Cable Row": "/exercises/seated-cable-row.webp",
+  "Barbell Curl": "/exercises/barbell-curl.webp",
+  "Cable Fly": "/exercises/cable-fly.webp",
+};
+
+describe("animated webP exercise demos (most-used plan exercises, batch 2)", () => {
+  it("each batch-2 exercise has a mediaWebp entry pointing at a real file", () => {
+    for (const [name, url] of Object.entries(WEBP_BY_EXERCISE_PLAN_BATCH2)) {
+      const entry = findExercise(name);
+      expect(entry, `${name} resolves in the library`).toBeTruthy();
+      expect(entry.mediaWebp).toBe(url);
+      const file = path.join(process.cwd(), "public", url);
+      expect(existsSync(file), `${url} exists`).toBe(true);
+      expect(statSync(file).size).toBeGreaterThan(0);
+    }
+  });
+
+  it("enrichPlan gives the batch-2 exercises webP media via the normal apply flow", () => {
+    const enriched = enrichPlan(
+      normalizePlan({
+        meta: {},
+        planType: "single_week",
+        days: [
+          {
+            label: "Pull A",
+            exercises: [
+              { name: "Deadlift", sets: 3, reps: "5", rest: 180 },
+              { name: "Lat Pulldown", sets: 3, reps: "10–12", rest: 90 },
+              { name: "Seated Cable Row", sets: 3, reps: "10–12", rest: 90 },
+              { name: "Barbell Curl", sets: 3, reps: "10–12", rest: 60 },
+              { name: "Cable Fly", sets: 3, reps: "12–15", rest: 60 },
+            ],
+          },
+        ],
+      })
+    );
+    for (const ex of enriched.days[0].exercises) {
+      expect(ex.media?.type, `${ex.name} has webP media`).toBe("webp");
+      expect(ex.media?.url).toBe(WEBP_BY_EXERCISE_PLAN_BATCH2[ex.name]);
+    }
+  });
+
+  it("the same exercise reuses the same webP across plans (Deadlift)", () => {
+    const enriched = enrichPlan(
+      normalizePlan({
+        meta: {},
+        planType: "single_week",
+        days: [
+          {
+            label: "Legs",
+            exercises: [
+              { name: "Deadlift", sets: 3, reps: "5", rest: 180 },
+              { name: "Assistance: Romanian Deadlift", sets: 3, reps: "10", rest: 90 },
+            ],
+          },
+        ],
+      })
+    );
+    // "Assistance: Romanian Deadlift" resolves to conventional Deadlift in the
+    // app's findExercise (pre-existing behaviour), so both slots share the
+    // deadlift webP.
+    expect(enriched.days[0].exercises[0].media?.url).toBe(
+      "/exercises/deadlift.webp"
+    );
+    expect(enriched.days[0].exercises[1].media?.url).toBe(
+      "/exercises/deadlift.webp"
+    );
   });
 });

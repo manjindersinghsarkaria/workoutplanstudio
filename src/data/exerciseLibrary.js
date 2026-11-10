@@ -93,6 +93,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep a constant slight bend in your elbows — never lock them.", "Lead with your elbows, not your wrists."],
     mediaUrl: yt("Cable Fly chest"),
+    mediaWebp: "/exercises/cable-fly.webp",
     alternates: [
       { name: "Pec Deck Machine", note: "Simpler setup, same isolation effect." },
       { name: "Dumbbell Fly", note: "No cable needed, but less constant tension." },
@@ -189,6 +190,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Engage your lats before pulling — think 'protect your armpits'.", "The bar should drag up your shins and thighs — wear socks."],
     mediaUrl: yt("Conventional Deadlift"),
+    mediaWebp: "/exercises/deadlift.webp",
     alternates: [
       { name: "Romanian Deadlift", note: "Hamstring-focused hinge with lighter loads." },
       { name: "Trap Bar Deadlift", note: "More upright torso — easier on the lower back." },
@@ -238,6 +240,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Don't shrug your shoulders as you pull — keep them depressed.", "The bar should come to your upper chest, not your chin."],
     mediaUrl: yt("Lat Pulldown"),
+    mediaWebp: "/exercises/lat-pulldown.webp",
     alternates: [
       { name: "Pull-Up", note: "Bodyweight version — more challenging." },
       { name: "Straight-Arm Pulldown", note: "Isolates lats without bicep involvement." },
@@ -254,6 +257,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Lead with your elbows, not your hands.", "Don't lean back excessively — keep torso mostly upright."],
     mediaUrl: yt("Seated Cable Row"),
+    mediaWebp: "/exercises/seated-cable-row.webp",
     alternates: [
       { name: "Barbell Row", note: "Free weight version — more core demand." },
       { name: "Dumbbell Row", note: "Unilateral, supported on a bench." },
@@ -476,6 +480,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Don't swing your back — if you are, the weight is too heavy.", "Full extension at the bottom — let your elbows fully straighten."],
     mediaUrl: yt("Barbell Curl bicep"),
+    mediaWebp: "/exercises/barbell-curl.webp",
     alternates: [
       { name: "Dumbbell Curl", note: "Allows more natural wrist rotation." },
       { name: "Cable Curl", note: "Constant tension on the bicep." },
