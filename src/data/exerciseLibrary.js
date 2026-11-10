@@ -62,6 +62,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Aim for a full stretch at the bottom — dumbbells allow more range than a bar.", "Don't let the dumbbells drift too far apart at the top."],
     mediaUrl: yt("Incline Dumbbell Press"),
+    mediaWebp: "/exercises/incline-dumbbell-press.webp",
     alternates: [
       { name: "Incline Barbell Press", note: "Heavier loads possible." },
       { name: "Incline Machine Press", note: "Stable path — useful for beginners." },
@@ -174,6 +175,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep your lower back neutral — no rounding.", "Squeeze your shoulder blades together at the top of every rep."],
     mediaUrl: yt("Barbell Row"),
+    mediaWebp: "/exercises/barbell-row.webp",
     alternates: [
       { name: "Dumbbell Row", note: "Unilateral — braced on a bench for lower back support." },
       { name: "Seated Cable Row", note: "No lower back fatigue accumulation." },
@@ -290,6 +292,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Use light weight — this is a health/balance exercise, not a strength move.", "The external rotation at the end is the most important part."],
     mediaUrl: yt("Face Pull cable"),
+    mediaWebp: "/exercises/face-pull.webp",
     alternates: [
       { name: "Band Pull-Apart", note: "Resistance band — same rear delt and external rotator target." },
       { name: "Rear Delt Machine Fly", note: "Machine version — easier to load." },
@@ -418,6 +421,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Keep your elbows pinned — only your forearms should move.", "Flare the rope outward at the bottom for more tricep contraction."],
     mediaUrl: yt("Tricep Pushdown cable"),
+    mediaWebp: "/exercises/tricep-pushdown.webp",
     alternates: [
       { name: "Skull Crusher", note: "Heavier load — great for building tricep mass." },
       { name: "Dips", note: "Bodyweight compound tricep movement." },
@@ -511,6 +515,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Neutral grip targets the brachialis and brachioradialis — important for arm width.", "Don't swing — keep upper arms still."],
     mediaUrl: yt("Hammer Curl"),
+    mediaWebp: "/exercises/hammer-curl.webp",
     alternates: [
       { name: "Rope Hammer Curl", note: "Cable version — constant tension." },
       { name: "Barbell Curl", note: "Supinated grip — more direct bicep focus." },
@@ -640,6 +645,7 @@ export const exerciseLibrary = [
     ],
     formTips: ["Pause at the top for 1 second — increases the quad stimulus.", "Don't let the weight crash down on the return."],
     mediaUrl: yt("Leg Extension machine"),
+    mediaWebp: "/exercises/leg-extension.webp",
     alternates: [
       { name: "Barbell Back Squat", note: "Compound quad movement — more overall stimulus." },
       { name: "Sissy Squat", note: "Bodyweight quad isolation — no machine needed." },

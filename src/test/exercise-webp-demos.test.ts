@@ -73,7 +73,7 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
   });
 
   it("exercises without a webP still fall back to YouTube", () => {
-    const entry = findExercise("Barbell Row");
+    const entry = findExercise("Push-Up");
     expect(entry.mediaWebp).toBeUndefined();
     const enriched = enrichPlan(
       normalizePlan({
@@ -83,7 +83,7 @@ describe("animated webP exercise demos (HIIT Day 1 pilot)", () => {
           {
             label: "Day 1",
             exercises: [
-              { name: "Barbell Row", sets: 3, reps: "8–10", rest: 120 },
+              { name: "Push-Up", sets: 3, reps: "8–10", rest: 120 },
             ],
           },
         ],
@@ -325,5 +325,53 @@ describe("animated webP exercise demos (most-used plan exercises, batch 2)", () 
     expect(enriched.days[0].exercises[1].media?.url).toBe(
       "/exercises/deadlift.webp"
     );
+  });
+});
+
+const WEBP_BY_EXERCISE_PLAN_BATCH3: Record<string, string> = {
+  "Barbell Row": "/exercises/barbell-row.webp",
+  "Hammer Curl": "/exercises/hammer-curl.webp",
+  "Incline Dumbbell Press": "/exercises/incline-dumbbell-press.webp",
+  "Tricep Pushdown": "/exercises/tricep-pushdown.webp",
+  "Face Pull": "/exercises/face-pull.webp",
+  "Leg Extension": "/exercises/leg-extension.webp",
+};
+
+describe("animated webP exercise demos (most-used plan exercises, batch 3)", () => {
+  it("each batch-3 exercise has a mediaWebp entry pointing at a real file", () => {
+    for (const [name, url] of Object.entries(WEBP_BY_EXERCISE_PLAN_BATCH3)) {
+      const entry = findExercise(name);
+      expect(entry, `${name} resolves in the library`).toBeTruthy();
+      expect(entry.mediaWebp).toBe(url);
+      const file = path.join(process.cwd(), "public", url);
+      expect(existsSync(file), `${url} exists`).toBe(true);
+      expect(statSync(file).size).toBeGreaterThan(0);
+    }
+  });
+
+  it("enrichPlan gives the batch-3 exercises webP media via the normal apply flow", () => {
+    const enriched = enrichPlan(
+      normalizePlan({
+        meta: {},
+        planType: "single_week",
+        days: [
+          {
+            label: "Pull B",
+            exercises: [
+              { name: "Barbell Row", sets: 4, reps: "6–8", rest: 150 },
+              { name: "Hammer Curl", sets: 3, reps: "10–12", rest: 60 },
+              { name: "Incline Dumbbell Press", sets: 3, reps: "8–10", rest: 90 },
+              { name: "Tricep Pushdown", sets: 3, reps: "12–15", rest: 60 },
+              { name: "Face Pull", sets: 3, reps: "15–20", rest: 45 },
+              { name: "Leg Extension", sets: 3, reps: "12–15", rest: 60 },
+            ],
+          },
+        ],
+      })
+    );
+    for (const ex of enriched.days[0].exercises) {
+      expect(ex.media?.type, `${ex.name} has webP media`).toBe("webp");
+      expect(ex.media?.url).toBe(WEBP_BY_EXERCISE_PLAN_BATCH3[ex.name]);
+    }
   });
 });
